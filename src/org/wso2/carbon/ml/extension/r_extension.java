@@ -37,23 +37,26 @@ public class r_extension {
 		mlFeature2.setInclude(true);
 		mlFeature2.setName("Class");
 		mlFeature2.setType("CATEGORICAL");
+		mlFeature2.setImputeOption("DISCARD");
 		featuresList.add(mlFeature2);
 
 		MLFeature mlFeature3 = new MLFeature();
 		mlFeature3.setInclude(true);
 		mlFeature3.setName("NumPregnancies");
 		mlFeature3.setType("CATEGORICAL");
+		mlFeature3.setImputeOption("DISCARD");
 		featuresList.add(mlFeature3);
 		
 		MLFeature mlFeature4 = new MLFeature();
 		mlFeature4.setInclude(true);
 		mlFeature4.setName("BMI");
 		mlFeature4.setType("NUMERICAL");
+		mlFeature4.setImputeOption("DISCARD");
 		featuresList.add(mlFeature4);
 
 		mlWorkflow.setAlgorithmName("LOGISTIC_REGRESSION");
 		mlWorkflow
-				.setDatasetURL("/home/danula/Downloads/pIndiansDiabetes_Missing.csv");
+				.setDatasetURL("pIndiansDiabetes_Missing.csv");
 		mlWorkflow.setFeatures(featuresList);
 		mlWorkflow.setResponseVariable("Class");
 
