@@ -1,19 +1,24 @@
 package org.wso2.carbon.ml.extension;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.rosuda.JRI.*;
+import org.rosuda.JRI.REXP;
+import org.rosuda.JRI.Rengine;
+import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
 import org.wso2.carbon.ml.model.internal.dto.MLFeature;
 import org.wso2.carbon.ml.model.internal.dto.MLWorkflow;
 
-public class r_extension {
 
-	/**
-	 * @param args
-	 */
+public class RExtension {
+	
+	private MLWorkflow mlWorkflow;
+	
+	public RExtension(){
+		this.mlWorkflow = new MLWorkflow();
+	}	
+
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		
 		// new R-engine
 		Rengine re = new Rengine(new String[] { "--vanilla" }, false, null);
 		if (!re.waitForR()) {
@@ -21,51 +26,14 @@ public class r_extension {
 			return;
 		}
 
-		// creating a sample ML workflow
-		MLWorkflow mlWorkflow = new MLWorkflow();
-		List<MLFeature> featuresList = new ArrayList<MLFeature>();
-
-		MLFeature mlFeature1 = new MLFeature();
-		mlFeature1.setInclude(true);
-		mlFeature1.setName("Age");
-		mlFeature1.setType("NUMERICAL");
-		mlFeature1.setImputeOption("REPLACE_WTH_MEAN");
-		featuresList.add(mlFeature1);
-
-		MLFeature mlFeature2 = new MLFeature();
-		mlFeature2.setInclude(true);
-		mlFeature2.setName("Class");
-		mlFeature2.setType("CATEGORICAL");
-		mlFeature2.setImputeOption("REPLACE_WTH_MEAN");
-		featuresList.add(mlFeature2);
-
-		MLFeature mlFeature3 = new MLFeature();
-		mlFeature3.setInclude(true);
-		mlFeature3.setName("NumPregnancies");
-		mlFeature3.setType("CATEGORICAL");
-		mlFeature3.setImputeOption("DISCARD");
-		featuresList.add(mlFeature3);
-
-		MLFeature mlFeature4 = new MLFeature();
-		mlFeature4.setInclude(true);
-		mlFeature4.setName("BMI");
-		mlFeature4.setType("NUMERICAL");
-		mlFeature4.setImputeOption("DISCARD");
-		featuresList.add(mlFeature4);
-
-		mlWorkflow.setAlgorithmName("LOGISTIC_REGRESSION");
-		mlWorkflow
-				.setDatasetURL("/home/danula/Downloads/pIndiansDiabetes_Missing.csv");
-		mlWorkflow.setFeatures(featuresList);
-		mlWorkflow.setResponseVariable("Class");
-
-		// evaluate MLWorkflow
-		evaluate(re, mlWorkflow);
-
-		// print a random number from uniform distribution
-		// System.out.println (re.eval ("8+5").asDouble ());
-
-		// done
+		
+		RExtension rex = new RExtension();
+		InitializeWorkflow ob = new InitializeWorkflow();
+		rex.mlWorkflow = ob.parseWorkflow("example_workflow.json");		
+		
+		//evaluate MLWorkflow
+		evaluate(re, rex.mlWorkflow);
+		
 		re.end();
 
 	}
