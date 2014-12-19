@@ -1,6 +1,5 @@
 package org.wso2.carbon.ml.extension;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rosuda.JRI.REXP;
@@ -16,9 +15,7 @@ public class RExtension {
 	
 	public RExtension(){
 		this.mlWorkflow = new MLWorkflow();
-	}
-	
-	
+	}	
 
 	public static void main(String[] args) {
 		
