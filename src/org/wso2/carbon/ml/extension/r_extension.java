@@ -1,7 +1,6 @@
 package org.wso2.carbon.ml.extension;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 
 import org.rosuda.JRI.*;
@@ -30,25 +29,28 @@ public class r_extension {
 		mlFeature1.setInclude(true);
 		mlFeature1.setName("Age");
 		mlFeature1.setType("NUMERICAL");
-		mlFeature1.setImputeOption("DISCARD");
+		mlFeature1.setImputeOption("REPLACE_WTH_MEAN");
 		featuresList.add(mlFeature1);
 
 		MLFeature mlFeature2 = new MLFeature();
 		mlFeature2.setInclude(true);
 		mlFeature2.setName("Class");
 		mlFeature2.setType("CATEGORICAL");
+		mlFeature2.setImputeOption("REPLACE_WTH_MEAN");
 		featuresList.add(mlFeature2);
 
 		MLFeature mlFeature3 = new MLFeature();
 		mlFeature3.setInclude(true);
 		mlFeature3.setName("NumPregnancies");
 		mlFeature3.setType("CATEGORICAL");
+		mlFeature3.setImputeOption("DISCARD");
 		featuresList.add(mlFeature3);
-		
+
 		MLFeature mlFeature4 = new MLFeature();
 		mlFeature4.setInclude(true);
 		mlFeature4.setName("BMI");
 		mlFeature4.setType("NUMERICAL");
+		mlFeature4.setImputeOption("DISCARD");
 		featuresList.add(mlFeature4);
 
 		mlWorkflow.setAlgorithmName("LOGISTIC_REGRESSION");
@@ -97,20 +99,21 @@ public class r_extension {
 					script.append(feature.getName());
 					flag = true;
 				}
-				
-				//define categorical data
+
+				// define categorical data
 				if (feature.getType().equals("CATEGORICAL")) {
 					String name = feature.getName();
 					re.eval("input$" + name + "<- factor(input$" + name + ")");
 				}
-				
-				//impute 
-				if(feature.getImputeOption().equals("REPLACE_WTH_MEAN")){
+
+				// impute
+				if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 					String name = feature.getName();
-					re.eval("temp <- mean(input$"+name+",na.rm=TRUE)");
-					re.eval("input$"+name+"[input$"+name+"==NA] <- temp");
+					re.eval("temp <- mean(input$" + name + ",na.rm=TRUE)");
+					re.eval("input$" + name + "[input$" + name
+							+ "==NA] <- temp");
 				}
-				//removing a row --- newdata <- na.omit(mydata)
+				// removing a row --- newdata <- na.omit(mydata)
 			}
 		}
 		script.append(", data=input, family=binomial(link='logit'))");
@@ -118,7 +121,8 @@ public class r_extension {
 		System.out.println(script);
 
 		// re.eval("df <- subset(mtcars, select=c(mpg,am,vs))",false);
-		REXP x = re.eval("coef(result)[['Age']]");
+		// REXP x = re.eval("coef(result)[['Age']]");
+		REXP x = re.eval("coef(result)");
 		System.out.println(x);
 	}
 
