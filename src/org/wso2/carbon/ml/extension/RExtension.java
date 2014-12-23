@@ -1,5 +1,6 @@
 package org.wso2.carbon.ml.extension;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rosuda.JRI.REXP;
@@ -49,34 +50,46 @@ public class RExtension {
 
 		StringBuffer script = new StringBuffer();
 		script.append("model <- ");
-		String postfix = null;
+		ArrayList<String> parameters = new ArrayList<>();
+		parameters.add("data=input");
 
 		switch (mlWorkflow.getAlgorithmName()) {
 		case "LOGISTIC_REGRESSION":
 			script.append("glm(");
-			postfix = ", data=input, family=binomial(link='logit'))";
+			parameters.add("family=binomial(link='logit')");
 			break;
 
 		case "RANDOM_FOREST":
 			re.eval("library(randomForest)", false);
 			script.append("randomForest(");
-			postfix = ",data=input, ntree=50)";
+			parameters.add("ntrees=50");
 			break;
 
 		case "SVM":
-			// re.eval("library()",false);
+			re.eval("library('e1071')", false);
+			script.append("svm(");
+			// postfix =
+			// ",data=input,type='C',kernel='linear',probability = TRUE)";
 			break;
 
 		case "LINEAR_REGRESSION":
 			script.append("lm(");
-			postfix = ",data=input)";
 			break;
 
 		case "DECISION_TREES":
 			re.eval("library(rpart)");
 			script.append("rpart(");
-			postfix = ", data=input, method='class')";
+			parameters.add("method='class'");
 			break;
+
+		case "K_MEANS":
+			break;
+
+		case "NAIVE_BAYES":
+			re.eval("library('e1071')", false);
+			script.append("naiveBayes(");
+			break;
+
 		}
 
 		List<MLFeature> features = mlWorkflow.getFeatures();
@@ -107,12 +120,12 @@ public class RExtension {
 				// impute
 				if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 					String name = feature.getName();
-					//calculate the mean
+					// calculate the mean
 					re.eval("temp <- mean(input$" + name + ",na.rm=TRUE)");
 
 					System.out.println("temp <- mean(input$" + name
 							+ ",na.rm=TRUE)");
-					//replace NA with mean
+					// replace NA with mean
 					re.eval("input$" + name + "[input$" + name
 							+ "==NA] <- temp");
 					System.out.println("input$" + name + "[input$" + name
@@ -125,11 +138,21 @@ public class RExtension {
 				// removing a row --- newdata <- na.omit(mydata)
 			}
 		}
-		script.append(postfix);
+		// appending parameters to the script
+		for (int i = 0; i < parameters.size(); i++) {
+			script.append(",");
+			script.append(parameters.get(i));
+		}
+		script.append(")");
 
 		REXP x = re.eval(script.toString());
 
 		System.out.println(script);
+
+		// saving model in PMML
+		re.eval("library(pmml)");
+		re.eval("modelpmml <- pmml(model)");
+		re.eval("write(toString(modelpmml),file = 'model.pmml')");
 
 		REXP y = re.eval("coef(model)[['Age']]");
 		// RVector x = re.eval("model").asVector();
