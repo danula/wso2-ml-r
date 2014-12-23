@@ -50,15 +50,32 @@ public class RExtension {
 		StringBuffer script = new StringBuffer();
 		script.append("model <- ");
 		String postfix = null;
+
 		switch (mlWorkflow.getAlgorithmName()) {
 		case "LOGISTIC_REGRESSION":
 			script.append("glm(");
 			postfix = ", data=input, family=binomial(link='logit'))";
 			break;
+
 		case "RANDOM_FOREST":
 			re.eval("library(randomForest)", false);
 			script.append("randomForest(");
 			postfix = ",data=input, ntree=50)";
+			break;
+
+		case "SVM":
+			// re.eval("library()",false);
+			break;
+
+		case "LINEAR_REGRESSION":
+			script.append("lm(");
+			postfix = ",data=input)";
+			break;
+
+		case "DECISION_TREES":
+			re.eval("library(rpart)");
+			script.append("rpart(");
+			postfix = ", data=input, method='class')";
 			break;
 		}
 
@@ -90,16 +107,18 @@ public class RExtension {
 				// impute
 				if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 					String name = feature.getName();
+					//calculate the mean
 					re.eval("temp <- mean(input$" + name + ",na.rm=TRUE)");
 
 					System.out.println("temp <- mean(input$" + name
 							+ ",na.rm=TRUE)");
-
+					//replace NA with mean
 					re.eval("input$" + name + "[input$" + name
 							+ "==NA] <- temp");
 					System.out.println("input$" + name + "[input$" + name
 							+ "==NA] <- temp");
 				} else if (feature.getImputeOption().equals("DISCARD")) {
+					// remove the rows with NA
 					re.eval("input[complete.cases(input$" + feature.getName()
 							+ "),]", false);
 				}
