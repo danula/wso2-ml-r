@@ -2,6 +2,7 @@ package org.wso2.carbon.ml.extension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPEnvironment;
@@ -69,7 +70,7 @@ public class RExtension {
 		case "RANDOM_FOREST":
 			re.parseAndEval("library(randomForest)", env, false);
 			script.append("randomForest(");
-			parameters.add("ntrees=50");
+			//parameters.add("ntrees=50");
 			break;
 
 		case "SVM":
@@ -146,11 +147,26 @@ public class RExtension {
 			}
 		}
 		// appending parameters to the script
-		for (int i = 0; i < parameters.size(); i++) {
+		//for (int i = 0; i < parameters.size(); i++) {
+		//	script.append(",");
+		//	script.append(parameters.get(i));
+		//}
+		
+		script.append(",data=input");
+		
+		// appending parameters to the script
+		Map<String,String> hyperParameters = mlWorkflow.getHyperParameters();
+		for (Map.Entry<String, String> entry : hyperParameters.entrySet())
+		{
 			script.append(",");
-			script.append(parameters.get(i));
+			script.append(entry.getKey());
+			script.append("=");
+			script.append(entry.getValue());
 		}
+		
 		script.append(")");
+		
+		
 
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
@@ -164,7 +180,7 @@ public class RExtension {
 		REXP y = re.parseAndEval("coef(model)[['Age']]", env, true);
 		// RVector x = re.eval("model").asVector();
 
-		System.out.println(x.toString());
+		System.out.println(x.toDebugString());
 		System.out.println(y.toString());
 
 	}
