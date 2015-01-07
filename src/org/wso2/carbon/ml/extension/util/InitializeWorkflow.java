@@ -1,6 +1,8 @@
 package org.wso2.carbon.ml.extension.util;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,32 +13,30 @@ import java.util.Set;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.wso2.carbon.ml.model.internal.dto.MLFeature;
 import org.wso2.carbon.ml.model.internal.dto.MLWorkflow;
 
 public class InitializeWorkflow {
 
 	/**
-	 * Parsing Workflow JSON file
+	 * Parses Workflow JSON file
 	 * 
 	 * @param fileURL
-	 *            the URL of the json file
+	 *            the URL of the JSON file
 	 * @return MLWorkflow Bean
+	 * @throws ParseException 
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	public MLWorkflow parseWorkflow(String fileURL) {
+	public MLWorkflow parseWorkflow(String fileURL) throws FileNotFoundException, IOException, ParseException {
 
 		JSONParser parser = new JSONParser();
 		JSONObject workflow = null;
 
-		try {
+		Object obj = parser.parse(new FileReader(fileURL));
 
-			Object obj = parser.parse(new FileReader(fileURL));
-
-			workflow = (JSONObject) obj;
-
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-		}
+		workflow = (JSONObject) obj;
 
 		if (workflow != null) {
 			return populateWorkflowBean(workflow);
@@ -60,10 +60,8 @@ public class InitializeWorkflow {
 		mlWorkflow.setAlgorithmClass((String) workflow.get("algorithmClass"));
 		mlWorkflow.setAlgorithmName((String) workflow.get("algorithmName"));
 		mlWorkflow.setDatasetURL((String) workflow.get("datasetURL"));
-		mlWorkflow.setResponseVariable((String) workflow
-				.get("responseVariable"));
-		mlWorkflow.setTrainDataFraction((Double) workflow
-				.get("trainDataFraction"));
+		mlWorkflow.setResponseVariable((String) workflow.get("responseVariable"));
+		mlWorkflow.setTrainDataFraction((Double) workflow.get("trainDataFraction"));
 		mlWorkflow.setWorkflowID((String) workflow.get("workflowID"));
 
 		// populating features
