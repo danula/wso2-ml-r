@@ -14,8 +14,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.wso2.carbon.ml.model.internal.dto.MLFeature;
-import org.wso2.carbon.ml.model.internal.dto.MLWorkflow;
+import org.wso2.carbon.ml.extension.model.MLFeature;
+import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
 public class InitializeWorkflow {
 
