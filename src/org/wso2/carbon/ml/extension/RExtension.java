@@ -1,11 +1,13 @@
 package org.wso2.carbon.ml.extension;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.json.simple.parser.ParseException;
 import org.rosuda.REngine.REXP;
-import org.rosuda.REngine.REXPEnvironment;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngine;
 import org.rosuda.REngine.REngineException;
@@ -18,36 +20,51 @@ public class RExtension {
 
 	private REngine re;
 
-	public RExtension() {
 
-		try {
-			re = JRIEngine.createEngine();
-		} catch (REngineException e) {
-			System.out.println(e.getMessage());
-		}
+	/**
+	 * Default constructor for {@link RExtension}. Creates a REngine instance.
+	 * 
+	 * @throws REngineException
+	 */
+	public RExtension() throws REngineException {
+		this.re = JRIEngine.createEngine();
 	}
 
-	public static void main(String[] args) {
-
-		RExtension rex = new RExtension();
-		// new R-engine
-
-		InitializeWorkflow ob = new InitializeWorkflow();
-		MLWorkflow mlWorkflow = ob.parseWorkflow("example_workflow.json");
-
-		// evaluate MLWorkflow
-		try {
-			rex.evaluate(mlWorkflow);
-		} catch (REngineException e) {
-			System.out.println(e.getMessage());
-		} catch (REXPMismatchException e) {
-			System.out.println(e.getMessage());
-		}
-
+	/**
+	 * Evaluates {@link MLWorkflow}
+	 * 
+	 * @param workflowURL
+	 *            absolute location of the JSON mapped workflow
+	 * @param exportToPMML
+	 *            export as a PMML
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 * @throws REngineException
+	 * @throws REXPMismatchException
+	 */
+	public void evaluate(String workflowURL, boolean exportToPMML) throws FileNotFoundException,
+	                                                              IOException, ParseException,
+	                                                              REngineException,
+	                                                              REXPMismatchException {
+		InitializeWorkflow init = new InitializeWorkflow();
+		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
+		runScript(mlWorkflow, exportToPMML);
 	}
 
-	private void evaluate(MLWorkflow mlWorkflow) throws REngineException,
-			REXPMismatchException {
+	/**
+	 * Evaluates {@link MLWorkflow}
+	 * 
+	 * @param mlWorkflow
+	 *            MLWorkflow bean
+	 * @param exportToPMML
+	 *            export as a PMML
+	 * @throws REngineException
+	 * @throws REXPMismatchException
+	 */
+	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML) throws REngineException,
+	                                                                  REXPMismatchException {
+
 
 		REXP env = re.newEnvironment(null, true);
 
@@ -55,8 +72,7 @@ public class RExtension {
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL()
 				+ "')", env, false);
 
-		System.out.println("input <- read.csv('" + mlWorkflow.getDatasetURL()
-				+ "')");
+		System.out.println("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
 
 		StringBuffer script = new StringBuffer();
 		script.append("model <- ");
@@ -122,6 +138,7 @@ public class RExtension {
 							+ ")", env, false);
 					System.out.println("input$" + name + "<- factor(input$"
 							+ name + ")");
+
 				}
 
 				// impute
@@ -131,18 +148,17 @@ public class RExtension {
 					re.parseAndEval("temp <- mean(input$" + name
 							+ ",na.rm=TRUE)", env, false);
 
-					System.out.println("temp <- mean(input$" + name
-							+ ",na.rm=TRUE)");
+					System.out.println("temp <- mean(input$" + name + ",na.rm=TRUE)");
 					// replace NA with mean
-					re.parseAndEval("input$" + name + "[input$" + name
-							+ "==NA] <- temp", env, false);
-					System.out.println("input$" + name + "[input$" + name
-							+ "==NA] <- temp");
+					re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env,
+					                false);
+					System.out.println("input$" + name + "[input$" + name + "==NA] <- temp");
 				} else if (feature.getImputeOption().equals("DISCARD")) {
 					// remove the rows with NA
 					re.parseAndEval(
 							"input[complete.cases(input$" + feature.getName()
 									+ "),]", env, false);
+
 				}
 				// removing a row --- newdata <- na.omit(mydata)
 			}
@@ -167,9 +183,13 @@ public class RExtension {
 
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
-		System.out.println(script);
+		if (exportToPMML) {
+			exportToPMML(env);
+		}
 
-		// saving model in PMML
+	}
+
+	private void exportToPMML(REXP env) throws REngineException, REXPMismatchException {		
 		re.parseAndEval("library(pmml)", env, false);
 		re.parseAndEval("modelpmml <- pmml(model)", env, false);
 		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env,
@@ -178,8 +198,9 @@ public class RExtension {
 		REXP y = re.parseAndEval("coef(model)[['Age']]", env, true);
 		// RVector x = re.eval("model").asVector();
 
-		System.out.println(x.toDebugString());
+	//	System.out.println(x.toDebugString());
 		System.out.println(y.toString());
+
 
 	}
 
