@@ -20,7 +20,6 @@ public class RExtension {
 
 	private REngine re;
 
-
 	/**
 	 * Default constructor for {@link RExtension}. Creates a REngine instance.
 	 * 
@@ -43,10 +42,9 @@ public class RExtension {
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void evaluate(String workflowURL, boolean exportToPMML) throws FileNotFoundException,
-	                                                              IOException, ParseException,
-	                                                              REngineException,
-	                                                              REXPMismatchException {
+	public void evaluate(String workflowURL, boolean exportToPMML)
+			throws FileNotFoundException, IOException, ParseException,
+			REngineException, REXPMismatchException {
 		InitializeWorkflow init = new InitializeWorkflow();
 		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
 		runScript(mlWorkflow, exportToPMML);
@@ -62,9 +60,8 @@ public class RExtension {
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML) throws REngineException,
-	                                                                  REXPMismatchException {
-
+	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML)
+			throws REngineException, REXPMismatchException {
 
 		REXP env = re.newEnvironment(null, true);
 
@@ -72,7 +69,8 @@ public class RExtension {
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL()
 				+ "')", env, false);
 
-		System.out.println("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
+		System.out.println("input <- read.csv('" + mlWorkflow.getDatasetURL()
+				+ "')");
 
 		StringBuffer script = new StringBuffer();
 		script.append("model <- ");
@@ -105,6 +103,7 @@ public class RExtension {
 			break;
 
 		case "K_MEANS":
+			script.append("kmeans(");
 			break;
 
 		case "NAIVE_BAYES":
@@ -116,14 +115,22 @@ public class RExtension {
 
 		List<MLFeature> features = mlWorkflow.getFeatures();
 
-		script.append(mlWorkflow.getResponseVariable());
-		script.append(" ~ ");
+		if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
+			// for classification
+			script.append(mlWorkflow.getResponseVariable());
+			script.append(" ~ ");
+		} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
+			// for clustering
+			script.append("x = input$");
+			script.append(mlWorkflow.getResponseVariable());
+		}
 
 		boolean flag = false;
 
 		for (int i = 0; i < features.size(); i++) {
 			MLFeature feature = features.get(i);
-			if (feature.isInclude()) {
+			if (feature.isInclude()
+					&& mlWorkflow.getAlgorithmClass().equals("Classification")) {
 				if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 					if (flag)
 						script.append("+");
@@ -148,11 +155,13 @@ public class RExtension {
 					re.parseAndEval("temp <- mean(input$" + name
 							+ ",na.rm=TRUE)", env, false);
 
-					System.out.println("temp <- mean(input$" + name + ",na.rm=TRUE)");
+					System.out.println("temp <- mean(input$" + name
+							+ ",na.rm=TRUE)");
 					// replace NA with mean
-					re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env,
-					                false);
-					System.out.println("input$" + name + "[input$" + name + "==NA] <- temp");
+					re.parseAndEval("input$" + name + "[input$" + name
+							+ "==NA] <- temp", env, false);
+					System.out.println("input$" + name + "[input$" + name
+							+ "==NA] <- temp");
 				} else if (feature.getImputeOption().equals("DISCARD")) {
 					// remove the rows with NA
 					re.parseAndEval(
@@ -169,8 +178,9 @@ public class RExtension {
 		// script.append(parameters.get(i));
 		// }
 
-		script.append(",data=input");
-
+		if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
+			script.append(",data=input");
+		}
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
@@ -181,6 +191,8 @@ public class RExtension {
 		}
 		script.append(")");
 
+		System.out.println(script.toString());
+		
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
 		if (exportToPMML) {
@@ -189,18 +201,18 @@ public class RExtension {
 
 	}
 
-	private void exportToPMML(REXP env) throws REngineException, REXPMismatchException {		
+	private void exportToPMML(REXP env) throws REngineException,
+			REXPMismatchException {
 		re.parseAndEval("library(pmml)", env, false);
 		re.parseAndEval("modelpmml <- pmml(model)", env, false);
 		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env,
 				false);
 
-		REXP y = re.parseAndEval("coef(model)[['Age']]", env, true);
+		REXP x = re.parseAndEval("model", env, true);
 		// RVector x = re.eval("model").asVector();
 
-	//	System.out.println(x.toDebugString());
-		System.out.println(y.toString());
-
+		// System.out.println(x.toDebugString());
+		System.out.println(x.toDebugString());
 
 	}
 
