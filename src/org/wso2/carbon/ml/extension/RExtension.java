@@ -20,6 +20,7 @@ public class RExtension {
 
 	private REngine re;
 
+
 	/**
 	 * Default constructor for {@link RExtension}. Creates a REngine instance.
 	 * 
@@ -64,54 +65,52 @@ public class RExtension {
 	private void runScript(MLWorkflow mlWorkflow, boolean exportToPMML) throws REngineException,
 	                                                                  REXPMismatchException {
 
+
 		REXP env = re.newEnvironment(null, true);
 
 		// load data from csv
-		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
+		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL()
+				+ "')", env, false);
 
 		System.out.println("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
 
 		StringBuffer script = new StringBuffer();
 		script.append("model <- ");
-		ArrayList<String> parameters = new ArrayList<>();
-		parameters.add("data=input");
 
 		switch (mlWorkflow.getAlgorithmName()) {
-			case "LOGISTIC_REGRESSION":
-				script.append("glm(");
-				parameters.add("family=binomial(link='logit')");
-				break;
+		case "LOGISTIC_REGRESSION":
+			script.append("glm(");
+			// parameters.add("family=binomial(link='logit')");
+			break;
 
-			case "RANDOM_FOREST":
-				re.parseAndEval("library(randomForest)", env, false);
-				script.append("randomForest(");
-				// parameters.add("ntrees=50");
-				break;
+		case "RANDOM_FOREST":
+			re.parseAndEval("library(randomForest)", env, false);
+			script.append("randomForest(");
+			// parameters.add("ntrees=50");
+			break;
 
-			case "SVM":
-				re.parseAndEval("library('e1071')", env, false);
-				script.append("svm(");
-				// postfix =
-				// ",data=input,type='C',kernel='linear',probability = TRUE)";
-				break;
+		case "SVM":
+			re.parseAndEval("library('e1071')", env, false);
+			script.append("svm(");
+			break;
 
-			case "LINEAR_REGRESSION":
-				script.append("lm(");
-				break;
+		case "LINEAR_REGRESSION":
+			script.append("lm(");
+			break;
 
-			case "DECISION_TREES":
-				re.parseAndEval("library(rpart)");
-				script.append("rpart(");
-				parameters.add("method='class'");
-				break;
+		case "DECISION_TREES":
+			re.parseAndEval("library(rpart)");
+			script.append("rpart(");
+			// parameters.add("method='class'");
+			break;
 
-			case "K_MEANS":
-				break;
+		case "K_MEANS":
+			break;
 
-			case "NAIVE_BAYES":
-				re.parseAndEval("library('e1071')", env, false);
-				script.append("naiveBayes(");
-				break;
+		case "NAIVE_BAYES":
+			re.parseAndEval("library('e1071')", env, false);
+			script.append("naiveBayes(");
+			break;
 
 		}
 
@@ -135,15 +134,19 @@ public class RExtension {
 				// define categorical data
 				if (feature.getType().equals("CATEGORICAL")) {
 					String name = feature.getName();
-					re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
-					System.out.println("input$" + name + "<- factor(input$" + name + ")");
+					re.parseAndEval("input$" + name + "<- factor(input$" + name
+							+ ")", env, false);
+					System.out.println("input$" + name + "<- factor(input$"
+							+ name + ")");
+
 				}
 
 				// impute
 				if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 					String name = feature.getName();
 					// calculate the mean
-					re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
+					re.parseAndEval("temp <- mean(input$" + name
+							+ ",na.rm=TRUE)", env, false);
 
 					System.out.println("temp <- mean(input$" + name + ",na.rm=TRUE)");
 					// replace NA with mean
@@ -152,8 +155,10 @@ public class RExtension {
 					System.out.println("input$" + name + "[input$" + name + "==NA] <- temp");
 				} else if (feature.getImputeOption().equals("DISCARD")) {
 					// remove the rows with NA
-					re.parseAndEval("input[complete.cases(input$" + feature.getName() + "),]", env,
-					                false);
+					re.parseAndEval(
+							"input[complete.cases(input$" + feature.getName()
+									+ "),]", env, false);
+
 				}
 				// removing a row --- newdata <- na.omit(mydata)
 			}
@@ -174,7 +179,6 @@ public class RExtension {
 			script.append("=");
 			script.append(entry.getValue());
 		}
-
 		script.append(")");
 
 		REXP x = re.parseAndEval(script.toString(), env, true);
@@ -188,7 +192,16 @@ public class RExtension {
 	private void exportToPMML(REXP env) throws REngineException, REXPMismatchException {		
 		re.parseAndEval("library(pmml)", env, false);
 		re.parseAndEval("modelpmml <- pmml(model)", env, false);
-		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env, false);
+		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env,
+				false);
+
+		REXP y = re.parseAndEval("coef(model)[['Age']]", env, true);
+		// RVector x = re.eval("model").asVector();
+
+	//	System.out.println(x.toDebugString());
+		System.out.println(y.toString());
+
+
 	}
 
 }
