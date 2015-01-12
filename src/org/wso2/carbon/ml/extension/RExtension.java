@@ -60,6 +60,7 @@ public class RExtension {
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
+
 	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML)
 			throws REngineException, REXPMismatchException {
 
@@ -192,7 +193,7 @@ public class RExtension {
 		script.append(")");
 
 		System.out.println(script.toString());
-		
+
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
 		if (exportToPMML) {
