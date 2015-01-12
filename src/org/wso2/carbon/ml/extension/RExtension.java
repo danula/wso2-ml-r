@@ -61,7 +61,7 @@ public class RExtension {
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML) throws REngineException,
+	private void runScript(MLWorkflow mlWorkflow, boolean exportToPMML) throws REngineException,
 	                                                                  REXPMismatchException {
 
 		REXP env = re.newEnvironment(null, true);
