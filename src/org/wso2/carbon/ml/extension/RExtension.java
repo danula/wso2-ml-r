@@ -42,9 +42,10 @@ public class RExtension {
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void evaluate(String workflowURL, boolean exportToPMML)
-			throws FileNotFoundException, IOException, ParseException,
-			REngineException, REXPMismatchException {
+	public void evaluate(String workflowURL, boolean exportToPMML) throws FileNotFoundException,
+	                                                              IOException, ParseException,
+	                                                              REngineException,
+	                                                              REXPMismatchException {
 		InitializeWorkflow init = new InitializeWorkflow();
 		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
 		runScript(mlWorkflow, exportToPMML);
@@ -61,56 +62,48 @@ public class RExtension {
 	 * @throws REXPMismatchException
 	 */
 
-	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML)
-			throws REngineException, REXPMismatchException {
-
+	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML) throws REngineException,
+	                                                                  REXPMismatchException {
+		
+		StringBuffer script = new StringBuffer();
 		REXP env = re.newEnvironment(null, true);
 
-		// load data from csv
-		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL()
-				+ "')", env, false);
+		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
 
-		System.out.println("input <- read.csv('" + mlWorkflow.getDatasetURL()
-				+ "')");
-
-		StringBuffer script = new StringBuffer();
 		script.append("model <- ");
 
 		switch (mlWorkflow.getAlgorithmName()) {
-		case "LOGISTIC_REGRESSION":
-			script.append("glm(");
-			// parameters.add("family=binomial(link='logit')");
-			break;
+			case "LOGISTIC_REGRESSION":
+				script.append("glm(");
+				break;
 
-		case "RANDOM_FOREST":
-			re.parseAndEval("library(randomForest)", env, false);
-			script.append("randomForest(");
-			// parameters.add("ntrees=50");
-			break;
+			case "RANDOM_FOREST":
+				re.parseAndEval("library(randomForest)", env, false);
+				script.append("randomForest(");
+				break;
 
-		case "SVM":
-			re.parseAndEval("library('e1071')", env, false);
-			script.append("svm(");
-			break;
+			case "SVM":
+				re.parseAndEval("library('e1071')", env, false);
+				script.append("svm(");
+				break;
 
-		case "LINEAR_REGRESSION":
-			script.append("lm(");
-			break;
+			case "LINEAR_REGRESSION":
+				script.append("lm(");
+				break;
 
-		case "DECISION_TREES":
-			re.parseAndEval("library(rpart)");
-			script.append("rpart(");
-			// parameters.add("method='class'");
-			break;
+			case "DECISION_TREES":
+				re.parseAndEval("library(rpart)");
+				script.append("rpart(");
+				break;
 
-		case "K_MEANS":
-			script.append("kmeans(");
-			break;
+			case "K_MEANS":
+				script.append("kmeans(");
+				break;
 
-		case "NAIVE_BAYES":
-			re.parseAndEval("library('e1071')", env, false);
-			script.append("naiveBayes(");
-			break;
+			case "NAIVE_BAYES":
+				re.parseAndEval("library('e1071')", env, false);
+				script.append("naiveBayes(");
+				break;
 
 		}
 
@@ -130,8 +123,7 @@ public class RExtension {
 
 		for (int i = 0; i < features.size(); i++) {
 			MLFeature feature = features.get(i);
-			if (feature.isInclude()
-					&& mlWorkflow.getAlgorithmClass().equals("Classification")) {
+			if (feature.isInclude() && mlWorkflow.getAlgorithmClass().equals("Classification")) {
 				if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 					if (flag)
 						script.append("+");
@@ -142,10 +134,8 @@ public class RExtension {
 				// define categorical data
 				if (feature.getType().equals("CATEGORICAL")) {
 					String name = feature.getName();
-					re.parseAndEval("input$" + name + "<- factor(input$" + name
-							+ ")", env, false);
-					System.out.println("input$" + name + "<- factor(input$"
-							+ name + ")");
+					re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
+					System.out.println("input$" + name + "<- factor(input$" + name + ")");
 
 				}
 
@@ -153,46 +143,30 @@ public class RExtension {
 				if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 					String name = feature.getName();
 					// calculate the mean
-					re.parseAndEval("temp <- mean(input$" + name
-							+ ",na.rm=TRUE)", env, false);
+					re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 
-					System.out.println("temp <- mean(input$" + name
-							+ ",na.rm=TRUE)");
+					System.out.println("temp <- mean(input$" + name + ",na.rm=TRUE)");
 					// replace NA with mean
-					re.parseAndEval("input$" + name + "[input$" + name
-							+ "==NA] <- temp", env, false);
-					System.out.println("input$" + name + "[input$" + name
-							+ "==NA] <- temp");
+					re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env,
+					                false);
+					System.out.println("input$" + name + "[input$" + name + "==NA] <- temp");
 				} else if (feature.getImputeOption().equals("DISCARD")) {
 					// remove the rows with NA
-					re.parseAndEval(
-							"input[complete.cases(input$" + feature.getName()
-									+ "),]", env, false);
+					re.parseAndEval("input[complete.cases(input$" + feature.getName() + "),]", env,
+					                false);
 
 				}
 				// removing a row --- newdata <- na.omit(mydata)
 			}
 		}
-		// appending parameters to the script
-		// for (int i = 0; i < parameters.size(); i++) {
-		// script.append(",");
-		// script.append(parameters.get(i));
-		// }
 
 		if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
 			script.append(",data=input");
 		}
 		// appending parameters to the script
-		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
-		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
-			script.append(",");
-			script.append(entry.getKey());
-			script.append("=");
-			script.append(entry.getValue());
-		}
-		script.append(")");
-
-		System.out.println(script.toString());
+		Map<String, String>  hyperParameters = mlWorkflow.getHyperParameters();
+		script = appendParameters(hyperParameters, script);
+		
 
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
@@ -201,19 +175,26 @@ public class RExtension {
 		}
 
 	}
+	
+	private StringBuffer appendParameters(Map<String, String> hyperParameters, StringBuffer script){
+		
+		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
+			script.append(",");
+			script.append(entry.getKey());
+			script.append("=");
+			script.append(entry.getValue());
+		}
+		script.append(")");
+		
+		return script;
+	}
 
-	private void exportToPMML(REXP env) throws REngineException,
-			REXPMismatchException {
+	private void exportToPMML(REXP env) throws REngineException, REXPMismatchException {
 		re.parseAndEval("library(pmml)", env, false);
 		re.parseAndEval("modelpmml <- pmml(model)", env, false);
-		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env,
-				false);
+		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env, false);
 
 		REXP x = re.parseAndEval("model", env, true);
-		// RVector x = re.eval("model").asVector();
-
-		// System.out.println(x.toDebugString());
-		System.out.println(x.toDebugString());
 
 	}
 
