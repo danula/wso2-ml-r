@@ -160,8 +160,10 @@ public class RExtension {
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
 
+		//evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
+		//exporting the model in PMML format
 		if (exportToPMML) {
 			exportToPMML(env);
 		}
