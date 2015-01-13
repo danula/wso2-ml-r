@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class RExtensionTest {
+public class RExtensionTestCase {
 
 	@Test
 	public void test() {

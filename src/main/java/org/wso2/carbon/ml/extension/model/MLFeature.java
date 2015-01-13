@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.ml.model.internal.dto;
+package org.wso2.carbon.ml.extension.model;
 
 /**
  * DTO class to store a machine learning feature

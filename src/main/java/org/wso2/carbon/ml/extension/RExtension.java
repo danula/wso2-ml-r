@@ -12,9 +12,9 @@ import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngine;
 import org.rosuda.REngine.REngineException;
 import org.rosuda.REngine.JRI.JRIEngine;
+import org.wso2.carbon.ml.extension.model.MLFeature;
+import org.wso2.carbon.ml.extension.model.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
-import org.wso2.carbon.ml.model.internal.dto.MLFeature;
-import org.wso2.carbon.ml.model.internal.dto.MLWorkflow;
 
 public class RExtension {
 
