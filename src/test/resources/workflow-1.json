@@ -1,5 +1,6 @@
 { "algorithmClass" : "Classification",
-  "algorithmName" :"dataset-1.csv",
+  "algorithmName" : "SVM",
+  "datasetURL"  :"src/test/resources/dataset-1.csv",
   "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
         "include" : true,
         "index" : 0,
