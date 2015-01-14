@@ -12,7 +12,8 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 	        RExtension rex = new RExtension();
-	        rex.evaluate("example_workflow.json", true);
+	        rex.evaluate("src/test/resources/example_workflow.json", "/home/madawa/");
+	        
         } catch (REngineException e) {
 	        // TODO Auto-generated catch block
 	        e.printStackTrace();

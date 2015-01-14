@@ -21,13 +21,14 @@ import org.wso2.carbon.ml.extension.model.MLWorkflow;
  */
 public class InitializeWorkflowTestCase {
 
+	private static final String RESOURCE_LOCATION = "src/test/resources/example_workflow2.json";
 	MLWorkflow workflow;
 	
 	@Before
 	public void setup() {
 		InitializeWorkflow init = new InitializeWorkflow();
 		try {
-			workflow = init.parseWorkflow("src/test/resources/example_workflow2.json");
+			workflow = init.parseWorkflow(RESOURCE_LOCATION);
 		} catch (FileNotFoundException e) {
 			fail("Unexpected Exception - FileNotFoundException");
 		} catch (IOException e) {
@@ -37,9 +38,6 @@ public class InitializeWorkflowTestCase {
 		}
 	}
 	
-	/**
-	 * @should fail if MLWorkflow bean is null
-	 */
 	@Test
 	public void testParseWorkflow1() {
 		assertNotNull(workflow);
@@ -66,5 +64,7 @@ public class InitializeWorkflowTestCase {
 		assertEquals("L1", hyperParameters.get("Reg_Type"));
 
 	}
+	
+	
 
 }

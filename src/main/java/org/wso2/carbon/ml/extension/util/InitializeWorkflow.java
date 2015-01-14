@@ -66,11 +66,13 @@ public class InitializeWorkflow {
 
 		// populating features
 		JSONArray features = (JSONArray) workflow.get("features");
-		mlWorkflow.setFeatures(populateFeatures(features));
+		if(features != null)
+			mlWorkflow.setFeatures(populateFeatures(features));
 
 		// populating hyper parameters
 		JSONObject hyperParamObj = (JSONObject) workflow.get("hyperParameters");
-		mlWorkflow.setHyperParameters(populateHyperParameters(hyperParamObj));
+		if(features != null)
+			mlWorkflow.setHyperParameters(populateHyperParameters(hyperParamObj));
 
 		return mlWorkflow;
 	}
