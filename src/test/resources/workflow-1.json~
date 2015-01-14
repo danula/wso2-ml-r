@@ -1,0 +1,60 @@
+{ "algorithmClass" : "Classification",
+  "algorithmName" :"dataset-1.csv",
+  "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
+        "include" : true,
+        "index" : 0,
+        "name" : "Channel",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Region",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "REPLACE_WTH_MEAN",
+        "include" : true,
+        "index" : 0,
+        "name" : "Fresh",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Milk",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Grocery",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Frozen",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "REPLACE_WTH_MEAN",
+        "include" : true,
+        "index" : 0,
+        "name" : "Detergents_Paper",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Delicassen",
+        "type" : "NUMERICAL"
+      }
+    ],
+  "hyperParameters" : { 
+  		"type":"'C'",
+  		"kernel":"'linear'",
+  		"probability" : "TRUE"
+    },
+  "responseVariable" : "Channel",
+  "trainDataFraction" : 0.69999999999999996,
+  "workflowID" : "b9e108cb-0335-43b9-83ca-3cf1b207543e"
+}
