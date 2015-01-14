@@ -30,24 +30,42 @@ public class RExtension {
 	}
 
 	/**
+	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location
+	 * 
+	 * @param mlWorkflow
+	 *            MLWorkflow bean
+	 * @throws REngineException
+	 * @throws REXPMismatchException
+	 */
+	public void evaluate(MLWorkflow mlWorkflow) throws REngineException, REXPMismatchException {
+		evaluate(mlWorkflow, "");
+	}
+
+	public void evaluate(String workflowURL) throws FileNotFoundException, IOException,
+	                                        ParseException, REngineException, REXPMismatchException {
+		evaluate(workflowURL, "");
+	}
+
+	/**
 	 * Evaluates {@link MLWorkflow}
 	 * 
 	 * @param workflowURL
 	 *            absolute location of the JSON mapped workflow
-	 * @param exportToPMML
-	 *            export as a PMML
+	 * @param exportLocation
+	 *            absolute path to the exported PMML file
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 * @throws ParseException
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void evaluate(String workflowURL, boolean exportToPMML)
-			throws FileNotFoundException, IOException, ParseException,
-			REngineException, REXPMismatchException {
+	public void evaluate(String workflowURL, String exportLocation) throws FileNotFoundException,
+	                                                               IOException, ParseException,
+	                                                               REngineException,
+	                                                               REXPMismatchException {
 		InitializeWorkflow init = new InitializeWorkflow();
 		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
-		runScript(mlWorkflow, exportToPMML);
+		evaluate(mlWorkflow, exportLocation);
 	}
 
 	/**
@@ -55,55 +73,54 @@ public class RExtension {
 	 * 
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
-	 * @param exportToPMML
-	 *            export as a PMML
+	 * @param exportLocation
+	 *            absolute path to the exported PMML file
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
 
-	public void runScript(MLWorkflow mlWorkflow, boolean exportToPMML)
-			throws REngineException, REXPMismatchException {
+	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REngineException,
+	                                                                  REXPMismatchException {
 
 		StringBuffer script = new StringBuffer();
 		REXP env = re.newEnvironment(null, true);
 
-		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL()
-				+ "')", env, false);
+		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
 
 		script.append("model <- ");
 
 		switch (mlWorkflow.getAlgorithmName()) {
-		case "LOGISTIC_REGRESSION":
-			script.append("glm(");
-			break;
+			case "LOGISTIC_REGRESSION":
+				script.append("glm(");
+				break;
 
-		case "RANDOM_FOREST":
-			re.parseAndEval("library(randomForest)", env, false);
-			script.append("randomForest(");
-			break;
+			case "RANDOM_FOREST":
+				re.parseAndEval("library(randomForest)", env, false);
+				script.append("randomForest(");
+				break;
 
-		case "SVM":
-			re.parseAndEval("library('e1071')", env, false);
-			script.append("svm(");
-			break;
+			case "SVM":
+				re.parseAndEval("library('e1071')", env, false);
+				script.append("svm(");
+				break;
 
-		case "LINEAR_REGRESSION":
-			script.append("lm(");
-			break;
+			case "LINEAR_REGRESSION":
+				script.append("lm(");
+				break;
 
-		case "DECISION_TREES":
-			re.parseAndEval("library(rpart)");
-			script.append("rpart(");
-			break;
+			case "DECISION_TREES":
+				re.parseAndEval("library(rpart)");
+				script.append("rpart(");
+				break;
 
-		case "K_MEANS":
-			script.append("kmeans(");
-			break;
+			case "K_MEANS":
+				script.append("kmeans(");
+				break;
 
-		case "NAIVE_BAYES":
-			re.parseAndEval("library('e1071')", env, false);
-			script.append("naiveBayes(");
-			break;
+			case "NAIVE_BAYES":
+				re.parseAndEval("library('e1071')", env, false);
+				script.append("naiveBayes(");
+				break;
 
 		}
 
@@ -119,8 +136,7 @@ public class RExtension {
 			for (int i = 0; i < features.size(); i++) {
 				MLFeature feature = features.get(i);
 				if (feature.isInclude()) {
-					if (!mlWorkflow.getResponseVariable().equals(
-							feature.getName())) {
+					if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 						if (flag)
 							script.append("+");
 						script.append(feature.getName());
@@ -145,7 +161,7 @@ public class RExtension {
 			for (int i = 0; i < features.size(); i++) {
 				MLFeature feature = features.get(i);
 				if (feature.isInclude()) {
-					
+
 					// define categorical data
 					defineCategoricalData(feature, env);
 
@@ -160,18 +176,15 @@ public class RExtension {
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
 
-		//evaluating the R script
+		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
-		//exporting the model in PMML format
-		if (exportToPMML) {
-			exportToPMML(env);
-		}
+		// exporting the model in PMML format
+		exportToPMML(env, exportLocation);
 
 	}
 
-	private StringBuffer appendParameters(Map<String, String> hyperParameters,
-			StringBuffer script) {
+	private StringBuffer appendParameters(Map<String, String> hyperParameters, StringBuffer script) {
 
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
 			script.append(",");
@@ -184,49 +197,48 @@ public class RExtension {
 		return script;
 	}
 
-	private void exportToPMML(REXP env) throws REngineException,
-			REXPMismatchException {
+	private void exportToPMML(REXP env, String exportLocation) throws REngineException,
+	                                                          REXPMismatchException {
 		re.parseAndEval("library(pmml)", env, false);
 		re.parseAndEval("modelpmml <- pmml(model)", env, false);
-		re.parseAndEval("write(toString(modelpmml),file = 'model.pmml')", env,
-				false);
+		
+		StringBuffer locationBuffer = new StringBuffer(exportLocation);
+		
+		if(!exportLocation.endsWith("/"))
+			locationBuffer.append("/");
+		
+		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
+		buffer.append(locationBuffer);
+		buffer.append("model.pmml')");
+		
+		re.parseAndEval(buffer.toString(), env, false);
 
 		REXP x = re.parseAndEval("model", env, true);
 
 	}
 
-	private void impute(MLFeature feature, REXP env) throws REngineException,
-			REXPMismatchException {
+	private void impute(MLFeature feature, REXP env) throws REngineException, REXPMismatchException {
 		if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 			String name = feature.getName();
 			// calculate the mean
-			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env,
-					false);
+			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 
 			System.out.println("temp <- mean(input$" + name + ",na.rm=TRUE)");
 			// replace NA with mean
-			re.parseAndEval("input$" + name + "[input$" + name
-					+ "==NA] <- temp", env, false);
-			System.out.println("input$" + name + "[input$" + name
-					+ "==NA] <- temp");
+			re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env, false);
+			System.out.println("input$" + name + "[input$" + name + "==NA] <- temp");
 		} else if (feature.getImputeOption().equals("DISCARD")) {
 			// remove the rows with NA
-			re.parseAndEval("input[complete.cases(input$" + feature.getName()
-					+ "),]", env, false);
+			re.parseAndEval("input[complete.cases(input$" + feature.getName() + "),]", env, false);
 
 		}
-		// removing a row --- newdata <- na.omit(mydata)
 	}
 
-	private void defineCategoricalData(MLFeature feature, REXP env)
-			throws REngineException, REXPMismatchException {
+	private void defineCategoricalData(MLFeature feature, REXP env) throws REngineException,
+	                                                               REXPMismatchException {
 		if (feature.getType().equals("CATEGORICAL")) {
 			String name = feature.getName();
-			re.parseAndEval("input$" + name + "<- factor(input$" + name + ")",
-					env, false);
-			System.out.println("input$" + name + "<- factor(input$" + name
-					+ ")");
-
+			re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
 		}
 	}
 }

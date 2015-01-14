@@ -1,6 +1,6 @@
 { "algorithmClass" : "Classification",
   "algorithmName" : "LOGISTIC_REGRESSION",
-  "datasetURL" : "pIndiansDiabetes_Missing.csv",
+  "datasetURL" : "src/test/resources/pIndiansDiabetes_Missing.csv",
   "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
         "include" : true,
         "index" : 0,
