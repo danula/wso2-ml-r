@@ -19,6 +19,7 @@ import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
 public class RExtension {
 
 	private REngine re;
+	private StringBuffer script;
 
 	/**
 	 * Default constructor for {@link RExtension}. Creates a REngine instance.
@@ -27,6 +28,13 @@ public class RExtension {
 	 */
 	public RExtension() throws REngineException {
 		this.re = JRIEngine.createEngine();
+	}
+
+	/**
+	 * @return the script
+	 */
+	public StringBuffer getScript() {
+		return script;
 	}
 
 	/**
@@ -82,7 +90,7 @@ public class RExtension {
 	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REngineException,
 	                                                                  REXPMismatchException {
 
-		StringBuffer script = new StringBuffer();
+		script = new StringBuffer();
 		REXP env = re.newEnvironment(null, true);
 
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
@@ -175,7 +183,7 @@ public class RExtension {
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
-
+		
 		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
@@ -204,12 +212,13 @@ public class RExtension {
 		
 		StringBuffer locationBuffer = new StringBuffer(exportLocation);
 		
-		if(!exportLocation.endsWith("/"))
-			locationBuffer.append("/");
-		
 		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
 		buffer.append(locationBuffer);
-		buffer.append("model.pmml')");
+		
+		if(exportLocation.trim().equals(""))
+			buffer.append("model.pmml')");
+		else
+			buffer.append("')");
 		
 		re.parseAndEval(buffer.toString(), env, false);
 

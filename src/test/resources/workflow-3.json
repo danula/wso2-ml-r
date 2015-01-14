@@ -1,6 +1,6 @@
 { "algorithmClass" : "Classification",
-  "algorithmName" : "SVM",
-  "datasetURL" : "src/test/resources/pIndiansDiabetes_Missing.csv",
+  "algorithmName" : "LOGISTIC_REGRESSION",
+  "datasetURL" : "src/test/resources/dataset-3.csv",
   "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
         "include" : true,
         "index" : 0,
@@ -56,11 +56,7 @@
         "type" : "NUMERICAL"
       }
     ],
-  "hyperParameters" : { 
-  		"type":"'C'",
-  		"kernel":"'linear'",
-  		"probability" : "TRUE"
-    },
+  "hyperParameters" : { "family" : "binomial"},
   "responseVariable" : "Class",
   "trainDataFraction" : 0.69999999999999996,
   "workflowID" : "b9e108cb-0335-43b9-83ca-3cf1b207543e"
