@@ -21,7 +21,7 @@ import org.wso2.carbon.ml.extension.model.MLWorkflow;
  */
 public class InitializeWorkflowTestCase {
 
-	private static final String RESOURCE_LOCATION = "src/test/resources/workflow-1.json";
+	private static final String RESOURCE_LOCATION = "src/test/resources/workflow-3.json";
 	MLWorkflow workflow;
 	
 	@Before
@@ -49,7 +49,7 @@ public class InitializeWorkflowTestCase {
 		assertEquals("b9e108cb-0335-43b9-83ca-3cf1b207543e", workflow.getWorkflowID());
 		assertEquals("Classification", workflow.getAlgorithmClass());
 		assertEquals("LOGISTIC_REGRESSION", workflow.getAlgorithmName());
-		assertEquals("pIndiansDiabetes_Missing.csv", workflow.getDatasetURL());
+		assertEquals("src/test/resources/dataset-3.csv", workflow.getDatasetURL());
 		assertEquals("Class", workflow.getResponseVariable());
 		assertEquals(Double.toString(0.69999999999999996),
 		             Double.toString(workflow.getTrainDataFraction()));
@@ -60,8 +60,8 @@ public class InitializeWorkflowTestCase {
 		
 		Map<String, String> hyperParameters = workflow.getHyperParameters();
 		assertNotNull(hyperParameters);
-		assertEquals(5, hyperParameters.size());
-		assertEquals("L1", hyperParameters.get("Reg_Type"));
+		assertEquals(1, hyperParameters.size());
+		assertEquals("binomial", hyperParameters.get("family"));
 
 	}
 	

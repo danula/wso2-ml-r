@@ -31,7 +31,6 @@ public class RExtensionTestCase {
 	@Before
 	public void setup(){
 		try {
-			LOGGER.info("Setting up RExtension");
 	        this.rex = new RExtension();
         } catch (REngineException e) {
 	        fail("Unexpected Exception - REngineException");
@@ -57,7 +56,6 @@ public class RExtensionTestCase {
 		
 		try {
 			
-			LOGGER.info("Evaluating workflow-3.json");
 	        rex.evaluate(workflowLocation.append("workflow-3.json").toString());
 	        
 	        File file = new File("model.pmml");
