@@ -1,0 +1,96 @@
+{ "algorithmClass" : "Classification",
+  "algorithmName" : "RANDOM_FOREST",
+  "datasetURL" : "src/test/resources/dataset-4.csv",
+  "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
+        "include" : false,
+        "index" : 0,
+        "name" : "Dress_ID",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Style",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "REPLACE_WTH_MEAN",
+        "include" : true,
+        "index" : 0,
+        "name" : "Price",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "REPLACE_WTH_MEAN",
+        "include" : true,
+        "index" : 0,
+        "name" : "Rating",
+        "type" : "NUMERICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Size",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Season",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "NeckLine",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "SleeveLength",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "waiseline",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Material",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "FabricType",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Decoration",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Pattern Type",
+        "type" : "CATEGORICAL"
+      },
+      { "imputeOption" : "DISCARD",
+        "include" : true,
+        "index" : 0,
+        "name" : "Recommendation",
+        "type" : "CATEGORICAL"
+      }    
+      ],
+  "hyperParameters" : 
+  		{ 
+  			"ntree":"500"
+  		},
+  "responseVariable" : "Recommendation",
+  "trainDataFraction" : 0.69999999999999996,
+  "workflowID" : "b9e108cb-0335-43b9-83ca-3cf1b207543e"
+}
