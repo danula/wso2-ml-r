@@ -10,14 +10,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.wso2.carbon.ml.extension.RExtension;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
 public class InitializeWorkflow {
+	
+	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
 
 	/**
 	 * Parses Workflow JSON file
@@ -30,7 +34,8 @@ public class InitializeWorkflow {
 	 * @throws FileNotFoundException 
 	 */
 	public MLWorkflow parseWorkflow(String fileURL) throws FileNotFoundException, IOException, ParseException {
-
+		
+		LOGGER.debug("Parsing Workflow");
 		JSONParser parser = new JSONParser();
 		JSONObject workflow = null;
 
@@ -41,7 +46,8 @@ public class InitializeWorkflow {
 		if (workflow != null) {
 			return populateWorkflowBean(workflow);
 		}
-
+		
+		LOGGER.error("Parse Error : workflow is null");
 		return null;
 	}
 
@@ -85,7 +91,8 @@ public class InitializeWorkflow {
 	 * @return list of features
 	 */
 	private List<MLFeature> populateFeatures(JSONArray features) {
-
+		
+		LOGGER.debug("Parsing Features");
 		List<MLFeature> featuresList = new ArrayList<MLFeature>();
 		@SuppressWarnings("unchecked")
 		Iterator<JSONObject> iterator = features.iterator();
@@ -117,6 +124,8 @@ public class InitializeWorkflow {
 	 * @return Map with hyper parameters
 	 */
 	private Map<String, String> populateHyperParameters(JSONObject object) {
+		
+		LOGGER.debug("Parsing Hyper Parameters");
 		Map<String, String> map = new HashMap<String, String>();
 
 		@SuppressWarnings("unchecked")

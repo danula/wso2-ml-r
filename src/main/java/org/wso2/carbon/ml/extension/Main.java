@@ -12,7 +12,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 	        RExtension rex = new RExtension();
-	        rex.evaluate("src/test/resources/example_workflow.json", "/home/madawa/");
+	        rex.evaluate("src/test/resources/workflow-1.json", "/home/madawa/");
 	        
         } catch (REngineException e) {
 	        // TODO Auto-generated catch block

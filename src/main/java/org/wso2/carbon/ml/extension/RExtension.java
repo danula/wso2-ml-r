@@ -2,10 +2,10 @@ package org.wso2.carbon.ml.extension;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.json.simple.parser.ParseException;
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
@@ -18,6 +18,7 @@ import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
 
 public class RExtension {
 
+	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
 	private REngine re;
 	private StringBuffer script;
 
@@ -93,6 +94,7 @@ public class RExtension {
 		script = new StringBuffer();
 		REXP env = re.newEnvironment(null, true);
 
+		LOGGER.debug("Reading CSV : " + mlWorkflow.getDatasetURL());
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
 
 		script.append("model <- ");
@@ -103,11 +105,13 @@ public class RExtension {
 				break;
 
 			case "RANDOM_FOREST":
+				LOGGER.debug("Using library randomForest");
 				re.parseAndEval("library(randomForest)", env, false);
 				script.append("randomForest(");
 				break;
 
 			case "SVM":
+				LOGGER.debug("Using library e1071");
 				re.parseAndEval("library('e1071')", env, false);
 				script.append("svm(");
 				break;
@@ -117,6 +121,7 @@ public class RExtension {
 				break;
 
 			case "DECISION_TREES":
+				LOGGER.debug("Using library rpart");
 				re.parseAndEval("library(rpart)");
 				script.append("rpart(");
 				break;
@@ -126,6 +131,7 @@ public class RExtension {
 				break;
 
 			case "NAIVE_BAYES":
+				LOGGER.debug("Using library e1071");
 				re.parseAndEval("library('e1071')", env, false);
 				script.append("naiveBayes(");
 				break;
@@ -171,7 +177,8 @@ public class RExtension {
 				if (feature.isInclude()) {
 
 					// define categorical data
-					defineCategoricalData(feature, env);
+					if (feature.getType().equals("CATEGORICAL"))
+						defineCategoricalData(feature, env);
 
 					// impute
 					impute(feature, env);
@@ -183,7 +190,7 @@ public class RExtension {
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
-		
+
 		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
@@ -205,49 +212,52 @@ public class RExtension {
 		return script;
 	}
 
-	private void exportToPMML(REXP env, String exportLocation) throws REngineException,
-	                                                          REXPMismatchException {
-		re.parseAndEval("library(pmml)", env, false);
-		re.parseAndEval("modelpmml <- pmml(model)", env, false);
-		
-		StringBuffer locationBuffer = new StringBuffer(exportLocation);
-		
-		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
-		buffer.append(locationBuffer);
-		
-		if(exportLocation.trim().equals(""))
-			buffer.append("model.pmml')");
-		else
-			buffer.append("')");
-		
-		re.parseAndEval(buffer.toString(), env, false);
-
-		REXP x = re.parseAndEval("model", env, true);
-
-	}
-
 	private void impute(MLFeature feature, REXP env) throws REngineException, REXPMismatchException {
+		String name = feature.getName();
 		if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
-			String name = feature.getName();
-			// calculate the mean
-			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 
-			System.out.println("temp <- mean(input$" + name + ",na.rm=TRUE)");
-			// replace NA with mean
+			LOGGER.debug("Impute - Replacing with mean " + name);
+			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 			re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env, false);
-			System.out.println("input$" + name + "[input$" + name + "==NA] <- temp");
+
 		} else if (feature.getImputeOption().equals("DISCARD")) {
-			// remove the rows with NA
-			re.parseAndEval("input[complete.cases(input$" + feature.getName() + "),]", env, false);
+			LOGGER.debug("Impute - discard " + name);
+			re.parseAndEval("input[complete.cases(input$" + name + "),]", env, false);
 
 		}
 	}
 
 	private void defineCategoricalData(MLFeature feature, REXP env) throws REngineException,
 	                                                               REXPMismatchException {
-		if (feature.getType().equals("CATEGORICAL")) {
-			String name = feature.getName();
-			re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
-		}
+
+		String name = feature.getName();
+		LOGGER.debug("Define as categorical : " + name);
+		re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
+
+	}
+
+	private void exportToPMML(REXP env, String exportLocation) throws REngineException,
+	                                                          REXPMismatchException {
+		
+		LOGGER.debug("Exporting to PMML");
+		LOGGER.debug("Using library pmml");
+		re.parseAndEval("library(pmml)", env, false);
+		re.parseAndEval("modelpmml <- pmml(model)", env, false);
+
+		StringBuffer locationBuffer = new StringBuffer(exportLocation);
+
+		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
+		buffer.append(locationBuffer);
+
+		if (exportLocation.trim().equals(""))
+			buffer.append("model.pmml')");
+		else
+			buffer.append("')");
+
+		re.parseAndEval(buffer.toString(), env, false);
+		LOGGER.debug("Export Success - Location: "+ exportLocation);
+
+		REXP x = re.parseAndEval("model", env, true);
+
 	}
 }
