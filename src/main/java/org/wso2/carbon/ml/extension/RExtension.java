@@ -190,7 +190,9 @@ public class RExtension {
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
-
+		
+		LOGGER.debug(script.toString());
+		
 		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
