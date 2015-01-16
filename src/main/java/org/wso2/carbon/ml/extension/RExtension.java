@@ -39,7 +39,7 @@ public class RExtension {
 	}
 
 	/**
-	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location
+	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location.
 	 * 
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
@@ -50,13 +50,26 @@ public class RExtension {
 		evaluate(mlWorkflow, "");
 	}
 
+	/**
+	 * Evaluates {@link MLWorkflow}. Parses JSON mapped workflow form the given
+	 * URL. Exports PMML file to the default location.
+	 * 
+	 * @param workflowURL
+	 *            absolute location of the JSON mapped workflow
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 * @throws REngineException
+	 * @throws REXPMismatchException
+	 */
 	public void evaluate(String workflowURL) throws FileNotFoundException, IOException,
 	                                        ParseException, REngineException, REXPMismatchException {
 		evaluate(workflowURL, "");
 	}
 
 	/**
-	 * Evaluates {@link MLWorkflow}
+	 * Evaluates {@link MLWorkflow}. Parses JSON mapped workflow form the given
+	 * URL.
 	 * 
 	 * @param workflowURL
 	 *            absolute location of the JSON mapped workflow
@@ -105,7 +118,7 @@ public class RExtension {
 				break;
 
 			case "RANDOM_FOREST":
-				LOGGER.debug("Using library randomForest");
+				LOGGER.debug("RANDOM_FOREST: Using library randomForest");
 				re.parseAndEval("library(randomForest)", env, false);
 				script.append("randomForest(");
 				break;
@@ -121,7 +134,7 @@ public class RExtension {
 				break;
 
 			case "DECISION_TREES":
-				LOGGER.debug("Using library rpart");
+				LOGGER.debug("DECISION_TREES: Using library rpart");
 				re.parseAndEval("library(rpart)");
 				script.append("rpart(");
 				break;
@@ -131,7 +144,7 @@ public class RExtension {
 				break;
 
 			case "NAIVE_BAYES":
-				LOGGER.debug("Using library e1071");
+				LOGGER.debug("NAIVE_BAYES: Using library e1071");
 				re.parseAndEval("library('e1071')", env, false);
 				script.append("naiveBayes(");
 				break;
@@ -156,11 +169,10 @@ public class RExtension {
 						script.append(feature.getName());
 						flag = true;
 					}
+					
+					if (feature.getType().equals("CATEGORICAL"))
+						defineCategoricalData(feature, env);
 
-					// define categorical data
-					defineCategoricalData(feature, env);
-
-					// impute
 					impute(feature, env);
 				}
 			}
@@ -176,11 +188,9 @@ public class RExtension {
 				MLFeature feature = features.get(i);
 				if (feature.isInclude()) {
 
-					// define categorical data
 					if (feature.getType().equals("CATEGORICAL"))
 						defineCategoricalData(feature, env);
 
-					// impute
 					impute(feature, env);
 				}
 			}
@@ -190,9 +200,9 @@ public class RExtension {
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
-		
+
 		LOGGER.debug(script.toString());
-		
+
 		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
 
@@ -240,7 +250,7 @@ public class RExtension {
 
 	private void exportToPMML(REXP env, String exportLocation) throws REngineException,
 	                                                          REXPMismatchException {
-		
+
 		LOGGER.debug("Exporting to PMML");
 		LOGGER.debug("Using library pmml");
 		re.parseAndEval("library(pmml)", env, false);
@@ -257,9 +267,7 @@ public class RExtension {
 			buffer.append("')");
 
 		re.parseAndEval(buffer.toString(), env, false);
-		LOGGER.debug("Export Success - Location: "+ exportLocation);
-
-		REXP x = re.parseAndEval("model", env, true);
+		LOGGER.debug("Export Success - Location: " + exportLocation);
 
 	}
 }
