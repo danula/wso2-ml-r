@@ -47,10 +47,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.13</version>
                 <configuration>
-                 	<argLine>-Djava.library.path=/usr/lib/R/site-library/rJava/jri</argLine>
-                 	<environmentVariables>
-            			<R_HOME>/usr/lib/R</R_HOME>
-            		</environmentVariables>
+                 	<argLine>-Djava.library.path=${env.JRI_HOME}</argLine>
                     <includes>                    
                     </includes>
                 </configuration>
