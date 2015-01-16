@@ -21,7 +21,7 @@ import org.wso2.carbon.ml.extension.model.MLWorkflow;
  */
 public class InitializeWorkflowTestCase {
 
-	private static final String RESOURCE_LOCATION = "src/test/resources/example_workflow2.json";
+	private static final String RESOURCE_LOCATION = "src/test/resources/workflow-1.json";
 	MLWorkflow workflow;
 	
 	@Before

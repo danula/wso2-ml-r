@@ -41,7 +41,7 @@ public class RExtensionTestCase {
 		
 		InitializeWorkflow init = new InitializeWorkflow();
 		try {
-	        this.mlWorkflow = init.parseWorkflow(workflowLocation.append("workflow-1.json").toString());
+	        this.mlWorkflow = init.parseWorkflow(workflowLocation.append("workflow-3.json").toString());
         } catch (FileNotFoundException e) {
         	fail("Unexpected Exception - FileNotFoundException");
         } catch (IOException e) {
@@ -57,8 +57,8 @@ public class RExtensionTestCase {
 		
 		try {
 			
-			LOGGER.info("Evaluating workflow-1.json");
-	        rex.evaluate(workflowLocation.append("workflow-1.json").toString());
+			LOGGER.info("Evaluating workflow-3.json");
+	        rex.evaluate(workflowLocation.append("workflow-3.json").toString());
 	        
 	        File file = new File("model.pmml");
 	        
@@ -94,48 +94,6 @@ public class RExtensionTestCase {
         }
 	}
 	
-	@Test
-	public void testEvaluate3(){
-		
-		StringBuffer workflowLocation = new StringBuffer(RESOURCE_LOCATION);
-		File file;
-		
-		try {
-			
-	        rex.evaluate(workflowLocation.append("workflow-1.json").toString(), "src/test/resources/test3.pmml");
-	        file = new File("src/test/resources/test3.pmml");
-	        
-	        assertNotNull(file);
-	        
-        } catch (FileNotFoundException e) {
-        	fail("Unexpected Exception - FileNotFoundException");
-        } catch (IOException e) {
-        	fail("Unexpected Exception - IOException");
-        } catch (ParseException e) {
-        	fail("Unexpected Exception - ParseException");
-        } catch (REngineException e) {
-        	fail("Unexpected Exception - REngineException");
-        } catch (REXPMismatchException e) {
-        	fail("Unexpected Exception - REXPMismatchException");
-        } 
-	}
-	
-	@Test
-	public void testEvaluate4(){
-		
-		try {			
-	        rex.evaluate(mlWorkflow, "src/test/resources/test4.pmml");
-	        
-	        File file = new File("src/test/resources/test4.pmml");
-	        
-	        assertNotNull(file);
-	        
-        } catch (REngineException e) {
-        	fail("Unexpected Exception - REngineException");
-        } catch (REXPMismatchException e) {
-        	fail("Unexpected Exception - REXPMismatchException");
-        }
-	}
 	
 	@Test
 	public void testSVM(){
