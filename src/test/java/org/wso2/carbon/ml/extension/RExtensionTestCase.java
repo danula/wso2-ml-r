@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +20,8 @@ import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
 
 public class RExtensionTestCase {
 	
+	private static final Logger LOGGER = Logger.getLogger(RExtensionTestCase.class);
+	
 	private static final String RESOURCE_LOCATION = "src/test/resources/";
 	
 	private RExtension rex;
@@ -28,6 +31,7 @@ public class RExtensionTestCase {
 	@Before
 	public void setup(){
 		try {
+			LOGGER.info("Setting up RExtension");
 	        this.rex = new RExtension();
         } catch (REngineException e) {
 	        fail("Unexpected Exception - REngineException");
@@ -49,11 +53,11 @@ public class RExtensionTestCase {
 
 	@Test
 	public void testEvaluate1(){
-		
 		StringBuffer workflowLocation = new StringBuffer(RESOURCE_LOCATION);
 		
 		try {
 			
+			LOGGER.info("Evaluating workflow-1.json");
 	        rex.evaluate(workflowLocation.append("workflow-1.json").toString());
 	        
 	        File file = new File("model.pmml");
@@ -136,10 +140,10 @@ public class RExtensionTestCase {
 	@Test
 	public void testSVM(){
 		
-		String svmScript = "model <- svm(Channel ~ Region+Fresh+Milk+Grocery+Frozen+Detergents_Paper+Delicassen,data=input,probability=TRUE,type='C',kernel='linear')";
+		String svmScript = "model <- svm(UNS ~ STG+SCG+STR+LPR+PEG,data=input,probability=TRUE,type='C',kernel='linear')";
 
 		try {
-	        rex.evaluate("src/test/resources/workflow-1.json");
+	        rex.evaluate("src/test/resources/workflow-2.json");
 	        assertEquals(svmScript,rex.getScript().toString());
         } catch (IOException | ParseException | REngineException | REXPMismatchException e) {
 	        fail("Unexpected Exception");
