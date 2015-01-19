@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>r-ml</groupId>
 	<artifactId>r-ml</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>RExtension</name>
 	<dependencies>
 		<dependency>
