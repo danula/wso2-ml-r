@@ -18,4 +18,14 @@ R extesion for Machine Learner
 4. Install R <br> 
 `sudo apt-get install r-base-dev r-cran-rjava`
 
-<h2>Instruction for setting up R and rJava on Ubuntu</h2>
+5. Run R and install following libraries
+`install.packages('e1071')`
+`install.packages('rpart')`
+`install.packages('randomForest')`
+`install.packages(‘pmml’)`
+
+<h2>Instruction for setting up the project</h2>
+
+1. Before installing the R extensions, open a terminal and set R_HOME and JRI_HOME to the root folder of R and JRI respectively.<br>
+
+2. Run mvn clean install 
