@@ -18,11 +18,11 @@ R extesion for Machine Learner
 4. Install R <br> 
 `sudo apt-get install r-base-dev r-cran-rjava`
 
-5. Run R and install following libraries
-`install.packages('e1071')`
-`install.packages('rpart')`
-`install.packages('randomForest')`
-`install.packages(‘pmml’)`
+5. Run R and install following libraries<br>
+`install.packages('e1071')`<br>
+`install.packages('rpart')`<br>
+`install.packages('randomForest')`<br>
+`install.packages(‘pmml’)`<br>
 
 <h2>Instruction for setting up the project</h2>
 
