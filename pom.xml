@@ -9,7 +9,7 @@
 		<dependency>
 			<groupId>com.github.lucarosellini.rJava</groupId>
 			<artifactId>JRI</artifactId>
-			<version>0.9-7</version>g
+			<version>0.9-7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.lucarosellini.rJava</groupId>
