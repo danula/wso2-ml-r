@@ -230,11 +230,14 @@ public class RExtension {
 
 			LOGGER.debug("Impute - Replacing with mean " + name);
 			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
+			LOGGER.trace("temp <- mean(input$" + name + ",na.rm=TRUE)");
 			re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env, false);
+			LOGGER.trace("input$" + name + "[input$" + name + "==NA] <- temp");
 
 		} else if (feature.getImputeOption().equals("DISCARD")) {
 			LOGGER.debug("Impute - discard " + name);
 			re.parseAndEval("input[complete.cases(input$" + name + "),]", env, false);
+			LOGGER.trace("input[complete.cases(input$" + name + "),]");
 
 		}
 	}
@@ -245,6 +248,7 @@ public class RExtension {
 		String name = feature.getName();
 		LOGGER.debug("Define as categorical : " + name);
 		re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
+		LOGGER.trace("input$" + name + "<- factor(input$" + name + ")");
 
 	}
 
@@ -253,7 +257,9 @@ public class RExtension {
 
 		LOGGER.debug("Exporting to PMML");
 		LOGGER.debug("Using library pmml");
+		LOGGER.trace("library(pmml)");
 		re.parseAndEval("library(pmml)", env, false);
+		LOGGER.trace("modelpmml <- pmml(model)");
 		re.parseAndEval("modelpmml <- pmml(model)", env, false);
 
 		StringBuffer locationBuffer = new StringBuffer(exportLocation);
@@ -267,6 +273,7 @@ public class RExtension {
 			buffer.append("')");
 
 		re.parseAndEval(buffer.toString(), env, false);
+		LOGGER.trace(buffer.toString());
 		LOGGER.debug("Export Success - Location: " + exportLocation);
 
 	}
