@@ -15,6 +15,7 @@ import org.rosuda.REngine.JRI.JRIEngine;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
+import sun.rmi.runtime.Log;
 
 public class RExtension {
 
@@ -107,9 +108,9 @@ public class RExtension {
 		script = new StringBuffer();
 		REXP env = re.newEnvironment(null, true);
 
-		LOGGER.debug("Reading CSV : " + mlWorkflow.getDatasetURL());
+		LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
-
+		LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
 		script.append("model <- ");
 
 		switch (mlWorkflow.getAlgorithmName()) {
@@ -118,14 +119,16 @@ public class RExtension {
 				break;
 
 			case "RANDOM_FOREST":
-				LOGGER.debug("RANDOM_FOREST: Using library randomForest");
+				LOGGER.debug("#RANDOM_FOREST: Using library randomForest");
 				re.parseAndEval("library(randomForest)", env, false);
+				LOGGER.trace("library(randomForest)");
 				script.append("randomForest(");
 				break;
 
 			case "SVM":
-				LOGGER.debug("Using library e1071");
+				LOGGER.debug("#Using library e1071");
 				re.parseAndEval("library('e1071')", env, false);
+				LOGGER.trace("library('e1071')");
 				script.append("svm(");
 				break;
 
@@ -134,8 +137,9 @@ public class RExtension {
 				break;
 
 			case "DECISION_TREES":
-				LOGGER.debug("DECISION_TREES: Using library rpart");
+				LOGGER.debug("#DECISION_TREES: Using library rpart");
 				re.parseAndEval("library(rpart)");
+				LOGGER.trace("library(rpart)");
 				script.append("rpart(");
 				break;
 
@@ -144,8 +148,9 @@ public class RExtension {
 				break;
 
 			case "NAIVE_BAYES":
-				LOGGER.debug("NAIVE_BAYES: Using library e1071");
+				LOGGER.debug("#NAIVE_BAYES: Using library e1071");
 				re.parseAndEval("library('e1071')", env, false);
+				LOGGER.trace("library('e1071')");
 				script.append("naiveBayes(");
 				break;
 
@@ -201,7 +206,7 @@ public class RExtension {
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		script = appendParameters(hyperParameters, script);
 
-		LOGGER.debug(script.toString());
+		LOGGER.trace(script.toString());
 
 		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
@@ -228,25 +233,22 @@ public class RExtension {
 		String name = feature.getName();
 		if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 
-			LOGGER.debug("Impute - Replacing with mean " + name);
+			LOGGER.debug("#Impute - Replacing with mean " + name);
 			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 			LOGGER.trace("temp <- mean(input$" + name + ",na.rm=TRUE)");
 			re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env, false);
 			LOGGER.trace("input$" + name + "[input$" + name + "==NA] <- temp");
-
 		} else if (feature.getImputeOption().equals("DISCARD")) {
-			LOGGER.debug("Impute - discard " + name);
+			LOGGER.debug("#Impute - discard " + name);
 			re.parseAndEval("input[complete.cases(input$" + name + "),]", env, false);
 			LOGGER.trace("input[complete.cases(input$" + name + "),]");
-
 		}
 	}
 
 	private void defineCategoricalData(MLFeature feature, REXP env) throws REngineException,
 	                                                               REXPMismatchException {
-
 		String name = feature.getName();
-		LOGGER.debug("Define as categorical : " + name);
+		LOGGER.debug("#Define as categorical : " + name);
 		re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
 		LOGGER.trace("input$" + name + "<- factor(input$" + name + ")");
 
@@ -255,8 +257,8 @@ public class RExtension {
 	private void exportToPMML(REXP env, String exportLocation) throws REngineException,
 	                                                          REXPMismatchException {
 
-		LOGGER.debug("Exporting to PMML");
-		LOGGER.debug("Using library pmml");
+		LOGGER.debug("#Exporting to PMML");
+		LOGGER.debug("#Using library pmml");
 		LOGGER.trace("library(pmml)");
 		re.parseAndEval("library(pmml)", env, false);
 		LOGGER.trace("modelpmml <- pmml(model)");
@@ -274,7 +276,7 @@ public class RExtension {
 
 		re.parseAndEval(buffer.toString(), env, false);
 		LOGGER.trace(buffer.toString());
-		LOGGER.debug("Export Success - Location: " + exportLocation);
+		LOGGER.debug("#Export Success - Location: " + exportLocation);
 
 	}
 }
