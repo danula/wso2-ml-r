@@ -107,54 +107,15 @@ public class RExtension {
 
 		script = new StringBuffer();
 		REXP env = re.newEnvironment(null, true);
-
+		re.parseAndEval("library('caret')");
 		LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
 		LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
-		script.append("model <- ");
 
-		switch (mlWorkflow.getAlgorithmName()) {
-			case "LOGISTIC_REGRESSION":
-				script.append("glm(");
-				break;
+		re.parseAndEval("train_control <- trainControl(method='cv', number=10)",env,false);
+		script.append("model <- train(");
 
-			case "RANDOM_FOREST":
-				LOGGER.debug("#RANDOM_FOREST: Using library randomForest");
-				re.parseAndEval("library(randomForest)", env, false);
-				LOGGER.trace("library(randomForest)");
-				script.append("randomForest(");
-				break;
 
-			case "SVM":
-				LOGGER.debug("#Using library e1071");
-				re.parseAndEval("library('e1071')", env, false);
-				LOGGER.trace("library('e1071')");
-				script.append("svm(");
-				break;
-
-			case "LINEAR_REGRESSION":
-				script.append("lm(");
-				break;
-
-			case "DECISION_TREES":
-				LOGGER.debug("#DECISION_TREES: Using library rpart");
-				re.parseAndEval("library(rpart)");
-				LOGGER.trace("library(rpart)");
-				script.append("rpart(");
-				break;
-
-			case "K_MEANS":
-				script.append("kmeans(");
-				break;
-
-			case "NAIVE_BAYES":
-				LOGGER.debug("#NAIVE_BAYES: Using library e1071");
-				re.parseAndEval("library('e1071')", env, false);
-				LOGGER.trace("library('e1071')");
-				script.append("naiveBayes(");
-				break;
-
-		}
 
 		List<MLFeature> features = mlWorkflow.getFeatures();
 
@@ -182,6 +143,48 @@ public class RExtension {
 				}
 			}
 
+			script.append(", method =");
+			switch (mlWorkflow.getAlgorithmName()) {
+				case "LOGISTIC_REGRESSION":
+					script.append("'bayesglm'");
+					break;
+
+				case "RANDOM_FOREST":
+					script.append("'rf'");
+					break;
+
+				case "SVM":
+					LOGGER.debug("#Using library e1071");
+					re.parseAndEval("library('e1071')", env, false);
+					LOGGER.trace("library('e1071')");
+					script.append("svm(");
+					break;
+
+				case "LINEAR_REGRESSION":
+					script.append("lm(");
+					break;
+
+				case "DECISION_TREES":
+					LOGGER.debug("#DECISION_TREES: Using library rpart");
+					re.parseAndEval("library(rpart)");
+					LOGGER.trace("library(rpart)");
+					script.append("rpart(");
+					break;
+
+				case "K_MEANS":
+					script.append("kmeans(");
+					break;
+
+				case "NAIVE_BAYES":
+					LOGGER.debug("#NAIVE_BAYES: Using library e1071");
+					re.parseAndEval("library('e1071')", env, false);
+					LOGGER.trace("library('e1071')");
+					script.append("naiveBayes(");
+					break;
+
+			}
+
+
 			script.append(",data=input");
 
 		} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
@@ -204,29 +207,37 @@ public class RExtension {
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
-		script = appendParameters(hyperParameters, script);
-
+		if(appendParameters(hyperParameters)){
+			script.append(",tuneGrid=tuneGrid");
+		}
+		script.append(",trControl=train_control)");
 		LOGGER.trace(script.toString());
-
+		System.out.println(script.toString());
 		// evaluating the R script
 		REXP x = re.parseAndEval(script.toString(), env, true);
-
+		System.out.println(x.toDebugString());
 		// exporting the model in PMML format
 		exportToPMML(env, exportLocation);
 
 	}
 
-	private StringBuffer appendParameters(Map<String, String> hyperParameters, StringBuffer script) {
-
+	private boolean appendParameters(Map<String, String> hyperParameters) {
+		StringBuffer script = new StringBuffer();
+		boolean first = true;
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
-			script.append(",");
+			if(first){
+				script.append("tuneGrid <-  expand.grid(");
+				first = false;
+			}else {
+				script.append(",");
+			}
 			script.append(entry.getKey());
 			script.append("=");
 			script.append(entry.getValue());
 		}
-		script.append(")");
-
-		return script;
+		if(!first) script.append(")");
+		System.out.println(script.toString());
+		return !first;
 	}
 
 	private void impute(MLFeature feature, REXP env) throws REngineException, REXPMismatchException {
