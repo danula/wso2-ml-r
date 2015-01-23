@@ -7,10 +7,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.json.simple.parser.ParseException;
-import org.rosuda.REngine.REXP;
-import org.rosuda.REngine.REXPMismatchException;
-import org.rosuda.REngine.REngine;
-import org.rosuda.REngine.REngineException;
+import org.rosuda.REngine.*;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
@@ -105,14 +102,24 @@ public class RExtension {
 	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REngineException,
 	                                                                  REXPMismatchException {
 
+		re.parseAndEval("library(caret)");
+		re.parseAndEval("data(iris)");
+		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
+		re.parseAndEval("model <- train(Species~., data=iris, trControl=train_control, method='nb')");
+
+
+
 		script = new StringBuffer();
-		REXP env = re.newEnvironment(null, true);
+		REXP env = null;//re.newEnvironment(null, true);
 		re.parseAndEval("library('caret')");
+		LOGGER.trace("library('caret')");
 		LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
 		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
 		LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
 
 		re.parseAndEval("train_control <- trainControl(method='cv', number=10)",env,false);
+		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
+
 		script.append("model <- train(");
 
 
@@ -207,21 +214,32 @@ public class RExtension {
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
-		if(appendParameters(hyperParameters)){
+		if(appendParameters(hyperParameters,env)){
 			script.append(",tuneGrid=tuneGrid");
 		}
 		script.append(",trControl=train_control)");
 		LOGGER.trace(script.toString());
-		System.out.println(script.toString());
+
+
 		// evaluating the R script
-		REXP x = re.parseAndEval(script.toString(), env, true);
-		System.out.println(x.toDebugString());
+		re.parseAndEval(script.toString(), env, false);
+		re.parseAndEval("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])", env, false);
+		LOGGER.trace("\"prediction<-predict(model,input[-match('\"+mlWorkflow.getResponseVariable()+\"',names(input))])\"");
+
+		REXP out = re.parseAndEval("confusionMatrix(prediction,input$Class)", env, true);
+		LOGGER.trace("confusionMatrix(prediction,input$Class)");
+		System.out.println(out.toDebugString());
+
+		//REXP inp = re.parseAndEval("input", env, true);
+		//System.out.println(inp.toDebugString());
+
+		//System.out.println(x.toDebugString());
 		// exporting the model in PMML format
-		exportToPMML(env, exportLocation);
+		//exportToPMML(env, exportLocation);
 
 	}
 
-	private boolean appendParameters(Map<String, String> hyperParameters) {
+	private boolean appendParameters(Map<String, String> hyperParameters,REXP env) throws REXPMismatchException, REngineException {
 		StringBuffer script = new StringBuffer();
 		boolean first = true;
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
@@ -236,6 +254,7 @@ public class RExtension {
 			script.append(entry.getValue());
 		}
 		if(!first) script.append(")");
+		re.parseAndEval(script.toString(),env,false);
 		System.out.println(script.toString());
 		return !first;
 	}
@@ -247,12 +266,12 @@ public class RExtension {
 			LOGGER.debug("#Impute - Replacing with mean " + name);
 			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 			LOGGER.trace("temp <- mean(input$" + name + ",na.rm=TRUE)");
-			re.parseAndEval("input$" + name + "[input$" + name + "==NA] <- temp", env, false);
-			LOGGER.trace("input$" + name + "[input$" + name + "==NA] <- temp");
+			re.parseAndEval("input$" + name + "[is.na(input$" + name + ")] <- temp", env, false);
+			LOGGER.trace("input$" + name + "[is.na(input$" + name + ")] <- temp");
 		} else if (feature.getImputeOption().equals("DISCARD")) {
 			LOGGER.debug("#Impute - discard " + name);
-			re.parseAndEval("input[complete.cases(input$" + name + "),]", env, false);
-			LOGGER.trace("input[complete.cases(input$" + name + "),]");
+			re.parseAndEval("input <- input[complete.cases(input$" + name + "),]", env, false);
+			LOGGER.trace("input <- input[complete.cases(input$" + name + "),]");
 		}
 	}
 
