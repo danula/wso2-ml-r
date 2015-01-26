@@ -1,29 +1,23 @@
 package org.wso2.carbon.ml.extension.util;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.wso2.carbon.ml.extension.RExtension;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+
 public class InitializeWorkflow {
 
-    private final static Logger LOGGER = Logger.getLogger(RExtension.class);
+    private final static Logger LOGGER = Logger.getLogger(InitializeWorkflow.class);
 
     /**
      * Parses Workflow JSON file
