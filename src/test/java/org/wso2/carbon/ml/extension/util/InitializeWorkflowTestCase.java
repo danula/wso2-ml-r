@@ -12,6 +12,8 @@ import java.util.Map;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.wso2.carbon.ml.extension.exception.FormattingException;
+import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
@@ -23,18 +25,17 @@ public class InitializeWorkflowTestCase {
 
 	private static final String RESOURCE_LOCATION = "src/test/resources/workflow-3.json";
 	MLWorkflow workflow;
+	InitializeWorkflow init;
 	
 	@Before
 	public void setup() {
-		InitializeWorkflow init = new InitializeWorkflow();
+		 init = new InitializeWorkflow();
 		try {
 			workflow = init.parseWorkflow(RESOURCE_LOCATION);
-		} catch (FileNotFoundException e) {
-			fail("Unexpected Exception - FileNotFoundException");
-		} catch (IOException e) {
-			fail("Unexpected Exception - IOException");
-		} catch (ParseException e) {
-			fail("Unexpected Exception - ParseException");
+		}  catch (FormattingException e) {
+			fail("Unexpected Exception - Formatting Exception");
+		} catch (InitializationException e) {
+			fail("Unexpected Exception - Initializaion Exception");
 		}
 	}
 	
@@ -64,7 +65,16 @@ public class InitializeWorkflowTestCase {
 		assertEquals("binomial", hyperParameters.get("family"));
 
 	}
-	
-	
+
+	/*Testing Exceptions*/
+	@Test(expected = InitializationException.class)
+	public void testParseWorkflowexception1() throws FormattingException, InitializationException {
+		init.parseWorkflow("test.json");
+	}
+
+	@Test(expected = FormattingException.class)
+	public void testParseWorkflowexception2() throws FormattingException, InitializationException {
+		init.parseWorkflow("src/test/resources/empty.json");
+	}
 
 }
