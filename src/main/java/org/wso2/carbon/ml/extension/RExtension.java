@@ -1,6 +1,7 @@
 package org.wso2.carbon.ml.extension;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.rosuda.REngine.*;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
@@ -25,8 +26,14 @@ public class RExtension {
 	 * 
 	 * @throws REngineException
 	 */
-	public RExtension() throws REngineException {
-		re = JRIEngine.createEngine();
+	public RExtension() throws InitializationException{
+		PropertyConfigurator.configure("log4j.properties");
+		try {
+			re = JRIEngine.createEngine();
+		} catch (REngineException e) {
+			LOGGER.error(e.getMessage());
+			throw new InitializationException("Cannot create R Engine", e);
+		}
 	}
 
 	/**
@@ -171,7 +178,7 @@ public class RExtension {
 	                                                                  REXPMismatchException {
 
 
-		re.parseAndEval("library('caret')");
+		//re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 		re.parseAndEval("data(iris)");
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");

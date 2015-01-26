@@ -11,12 +11,11 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class);
 
     public static void main(String[] args) {
-    	long st = System.currentTimeMillis();
+        long st = System.currentTimeMillis();
         RExtension rex = null;
         try {
             rex = new RExtension();
             rex.evaluate("src/test/resources/workflow-3.json");
-            RExtension.re.close();
         } catch (REngineException e) {
             e.printStackTrace();
         } catch (FormattingException e) {
@@ -25,6 +24,8 @@ public class Main {
             e.printStackTrace();
         } catch (InitializationException e) {
             e.printStackTrace();
+        } finally{
+            rex.destroy();
         }
         
         long en = System.currentTimeMillis();
