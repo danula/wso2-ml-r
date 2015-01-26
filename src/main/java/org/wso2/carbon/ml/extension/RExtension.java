@@ -1,24 +1,17 @@
 package org.wso2.carbon.ml.extension;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
-
 import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
-import org.rosuda.REngine.*;
 import org.rosuda.REngine.JRI.JRIEngine;
+import org.rosuda.REngine.*;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.Constants;
 import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
-import com.google.gson.*;
 
-import sun.rmi.runtime.Log;
+import java.util.List;
+import java.util.Map;
 
 public class RExtension {
 
@@ -51,7 +44,7 @@ public class RExtension {
 	 * @throws REXPMismatchException
 	 */
 	public void evaluate(MLWorkflow mlWorkflow) throws REngineException, REXPMismatchException {
-		evaluate(mlWorkflow, "");
+		runScript(mlWorkflow, "");
 	}
 
 	/**
@@ -60,14 +53,12 @@ public class RExtension {
 	 * 
 	 * @param workflowURL
 	 *            absolute location of the JSON mapped workflow
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
+	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
+	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void evaluate(String workflowURL) throws FileNotFoundException, IOException,
-			ParseException, REngineException, REXPMismatchException, FormattingException, InitializationException {
+	public void evaluate(String workflowURL) throws REngineException, REXPMismatchException, FormattingException, InitializationException {
 		evaluate(workflowURL, "");
 	}
 
@@ -79,24 +70,20 @@ public class RExtension {
 	 *            absolute location of the JSON mapped workflow
 	 * @param exportLocation
 	 *            absolute path to the exported PMML file
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
+	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
+	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
-	public void evaluate(String workflowURL, String exportLocation) throws FileNotFoundException,
-			IOException, ParseException,
-			REngineException,
-			REXPMismatchException, FormattingException, InitializationException {
+	public void evaluate(String workflowURL, String exportLocation) throws REngineException, REXPMismatchException, FormattingException, InitializationException {
 		InitializeWorkflow init = new InitializeWorkflow();
 		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
-		evaluate(mlWorkflow, exportLocation);
+		initializeScript(mlWorkflow, exportLocation);
 	}
 
 	/**
 	 * Evaluates {@link MLWorkflow}
-	 * 
+	 *
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
 	 * @param exportLocation
@@ -104,8 +91,15 @@ public class RExtension {
 	 * @throws REngineException
 	 * @throws REXPMismatchException
 	 */
+	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REXPMismatchException, REngineException {
+		initializeScript(mlWorkflow, exportLocation);
+	}
 
-	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REngineException,
+	private void initializeScript(MLWorkflow mlWorkflow, String exportLocation){
+
+	}
+
+	private void runScript(MLWorkflow mlWorkflow) throws REngineException,
 	                                                                  REXPMismatchException {
 
 		re.parseAndEval("library(caret)");
