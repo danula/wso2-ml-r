@@ -12,13 +12,15 @@ import java.util.Map;
  * Created by danula on 1/26/15.
  */
 public class JSONConverter {
-    public static String convertToJSON(REXP e) {
+    public static String convertToJSONString(REXP e){
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
+        return gson.toJson(convertToJSON(e));
+    }
 
-
+    public static Object convertToJSON(REXP e) {
         System.out.println(e.toDebugString());
-        Map<String,String> jo= new HashMap<>();
+        Map<String,Object> jo= new HashMap<>();
 
         if(e instanceof REXPNull){
 
@@ -38,13 +40,13 @@ public class JSONConverter {
             //System.out.println("REXPString");
             String[] array = ((REXPString)e).asStrings();
 
-            return gson.toJson(array);
+            return array;
 
         }
         else if(e instanceof REXPSymbol){
             //System.out.println("REXPString");
             String[] array = ((REXPSymbol)e).asStrings();
-            return gson.toJson(array);
+            return array;
 
         }
         else if(e instanceof REXPList){
@@ -53,126 +55,33 @@ public class JSONConverter {
         else if(e instanceof REXPInteger){
             //return "REXPInt";
             //System.out.println("REXPInt");
-//            RList rl1=null;
-//            REXP type =null;
-//
-//            if(e._attr()!=null) {
-//                rl1 = e._attr().asList();
-//                type = rl1.at("names");
-//            }
-//            String[] names = null;
-//            if(type!=null) {
-//                names = ((REXPString) rl1.at("names")).asStrings();
-//                int[] arr = ((REXPInteger)e).asIntegers();
-//                for(int i=0;i<arr.length;i++){
-//                    if(rl1.at("class")==null)System.out.print(names[i]);
-//                    System.out.println(arr[i]);
-//                }
-//
-//            }else if(rl1.at("dim")!=null) {
-//                int rows = ((REXPInteger) rl1.at("dim")).asIntegers()[0];
-//                int cols = ((REXPInteger) rl1.at("dim")).asIntegers()[1];
-//                String[] axislabels = null;
-//                String[] rowNames = null;
-//                String[] colNames = null;
-//
-//                if(rl1.at("dimnames")!=null) {
-//                    if(rl1.at("dimnames")._attr()!=null) {
-//                        axislabels = ((REXPString) rl1.at("dimnames")._attr().asList().at("names")).asStrings();
-//                    }
-//
-//
-//                    if (!((((REXPGenericVector) rl1.at("dimnames")).asList().at(0)) instanceof REXPNull)) {
-//                        rowNames = ((REXPString) ((REXPGenericVector) rl1.at("dimnames")).asList().at(0)).asStrings();
-//                        colNames = ((REXPString) ((REXPGenericVector) rl1.at("dimnames")).asList().at(1)).asStrings();
-//                    }
-//                }
-//                int[] arr = ((REXPInteger)e).asIntegers();
-//                if(axislabels!=null)System.out.println("\t\t"+axislabels[0]);
-//                for(int i=-1;i<rows;i++){
-//                    for(int j=-1;j<cols;j++){
-//                        if(i==-1&&j==-1){
-//                            if(axislabels!=null)System.out.print(axislabels[1]+"\t");
-//                        }
-//                        else if(i==-1) {
-//                            if(colNames!=null) System.out.print(colNames[j]+"\t");
-//                        }
-//                        else if(j==-1) {
-//                            if(rowNames!=null) System.out.print("\t"+rowNames[i]+"\t");
-//                        }
-//                        else System.out.print(arr[i*cols+j]+"\t");
-//                    }
-//                    System.out.println();
-//                }
-//            }
-//
-//            System.out.println();
+
+            if(e._attr()!=null) {
+                RList rl1 = e._attr().asList();
+                for(String key:rl1.keys()){
+                    jo.put(key,convertToJSON(rl1.at(key)));
+                }
+            }
+            int[] array = ((REXPInteger)e).asIntegers();
+            jo.put("data",array);
 
         }
         else if(e instanceof REXPDouble){
 //            return "REXPDouble";
 //            System.out.println("REXPDouble");
-            RList rl1=null;
-            REXP names =null;
 
             if(e._attr()!=null) {
-                rl1 = e._attr().asList();
-
+                RList rl1 = e._attr().asList();
+                for(String key:rl1.keys()){
+                    jo.put(key,convertToJSON(rl1.at(key)));
+                }
             }
-            String[] namesList = null;
-            if(names!=null) {
-//                namesList = ((REXPString) rl1.at("names")).asStrings();
-//                double[] arr = ((REXPDouble)e).asDoubles();
-//                for(int i=0;i<arr.length;i++){
-//                    System.out.print(namesList[i]);
-//                    System.out.println(arr[i]);
-//                }
-//
-//            }else if(e._attr()!=null){
-//                int rows = ((REXPInteger) rl1.at("dim")).asIntegers()[0];
-//                int cols = ((REXPInteger) rl1.at("dim")).asIntegers()[1];
-//
-//                String[] axislabels = null;
-//                String[] rowNames = null;
-//                String[] colNames = null;
-//
-//                if(rl1.at("dimnames")!=null) {
-//                    if (rl1.at("dimnames")._attr() != null) {
-//                        axislabels = ((REXPString) rl1.at("dimnames")._attr().asList().at("names")).asStrings();
-//                    }
-//
-//                    if (!((((REXPGenericVector) rl1.at("dimnames")).asList().at(0)) instanceof REXPNull)) {
-//                        rowNames = ((REXPString) ((REXPGenericVector) rl1.at("dimnames")).asList().at(0)).asStrings();
-//                        colNames = ((REXPString) ((REXPGenericVector) rl1.at("dimnames")).asList().at(1)).asStrings();
-//                    }
-//                }
-//                double[] arr = ((REXPDouble)e).asDoubles();
-//                if(axislabels!=null)System.out.println("\t\t"+axislabels[0]);
-//                for(int i=-1;i<rows;i++){
-//                    for(int j=-1;j<cols;j++){
-//                        if(i==-1&&j==-1){
-//                            if(axislabels!=null)System.out.print(axislabels[1]+"\t");
-//                        }
-//                        else if(i==-1) {
-//                            if(colNames!=null) System.out.print(colNames[j]+"\t");
-//                        }
-//                        else if(j==-1) {
-//                            if(rowNames!=null) System.out.print("\t"+rowNames[i]+"\t");
-//                        }
-//                        else System.out.print(arr[i*cols+j]+"\t");
-//                    }
-//                    System.out.println();
-//                }
-//            }else{
-//                double[] array = ((REXPDouble)e).asDoubles();
-//                return gson.toJson(array);
-//            }
+            double[] array = ((REXPDouble)e).asDoubles();
+            jo.put("data",array);
+
         }
         else return "Other";
-        return gson.toJson(jo);
+        return jo;
     }
-    private String[] getNames(REXP rexp){
-        RList rl = rexp._attr().asList();
-        return ((REXPString) rl.at("names")).asStrings();
-    }
+
 }
