@@ -2,8 +2,7 @@ package org.wso2.carbon.ml.extension;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.json.simple.parser.ParseException;
@@ -224,11 +223,13 @@ public class RExtension {
 		// evaluating the R script
 		re.parseAndEval(script.toString(), env, false);
 		re.parseAndEval("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])", env, false);
-		LOGGER.trace("\"prediction<-predict(model,input[-match('\"+mlWorkflow.getResponseVariable()+\"',names(input))])\"");
+		LOGGER.trace("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])");
 
 		REXP out = re.parseAndEval("confusionMatrix(prediction,input$Class)", env, true);
-		LOGGER.trace("confusionMatrix(prediction,input$Class)");
+		out = re.parseAndEval("model$finalModel", env, true);
+		print(out);
 		System.out.println(out.toDebugString());
+		LOGGER.trace("confusionMatrix(prediction,input$Class)");
 
 		//REXP inp = re.parseAndEval("input", env, true);
 		//System.out.println(inp.toDebugString());
@@ -237,6 +238,86 @@ public class RExtension {
 		// exporting the model in PMML format
 		//exportToPMML(env, exportLocation);
 
+	}
+
+	private void print(REXP e) {
+		System.out.println(e.toDebugString());
+		if(e.isList()&& !(e instanceof REXPNull)) {
+		//if(e instanceof REXPGenericVector) {
+			RList rl ;
+			if(e instanceof REXPGenericVector) rl = ((REXPGenericVector)e).asList();
+			else rl = ((REXPList)e).asList();
+			for(int i=0;i<rl.size();i++){
+				System.out.println(rl.keyAt(i));
+				//System.out.println(rl.elementAt(i).getClass());
+				print(rl.at(i));
+			}
+
+		}
+		else if(e instanceof REXPString){
+			//System.out.println("REXPString");
+			String[] arr = ((REXPString)e).asStrings();
+			for(String s:arr){
+				System.out.println(s);
+			}
+
+		}
+		else if(e instanceof REXPList){
+			System.out.println("REXPList");
+		}
+		else if(e instanceof REXPInteger){
+			//System.out.println("REXPInt");
+
+			RList rl1 = e._attr().asList();
+			REXP type = rl1.at("class");
+			String[] names = null;
+			if(type==null) {
+				names = ((REXPString) rl1.at("names")).asStrings();
+				int[] arr = ((REXPInteger)e).asIntegers();
+				for(int i=0;i<arr.length;i++){
+					if(rl1.at("class")==null)System.out.print(names[i]);
+					System.out.println(arr[i]);
+				}
+
+			}else if(((REXPString)type).asStrings()[0].equals("table")){
+				int rows = ((REXPInteger) rl1.at("dim")).asIntegers()[0];
+				int cols = ((REXPInteger) rl1.at("dim")).asIntegers()[1];
+				String[] axislabels = ((REXPString)rl1.at("dimnames")._attr().asList().at("names")).asStrings();
+				String[] rowNames = ((REXPString)((REXPGenericVector)rl1.at("dimnames")).asList().at(0)).asStrings();
+				String[] colNames = ((REXPString)((REXPGenericVector)rl1.at("dimnames")).asList().at(1)).asStrings();
+				int[] arr = ((REXPInteger)e).asIntegers();
+				System.out.println("\t\t"+axislabels[0]);
+				for(int i=-1;i<rows;i++){
+					for(int j=-1;j<cols;j++){
+						if(i==-1&&j==-1) System.out.print(axislabels[1]+"\t");
+						else if(i==-1) System.out.print(colNames[j]+"\t");
+						else if(j==-1) System.out.print("\t"+rowNames[i]+"\t");
+						else System.out.print(arr[i*cols+j]+"\t");
+					}
+					System.out.println();
+				}
+			}
+
+			System.out.println();
+
+		}
+		else if(e instanceof REXPDouble){
+			String[] names = getNames(e);
+			//System.out.println("REXPDouble");
+			double[] arr = ((REXPDouble)e).asDoubles();
+			for(int i=0;i<arr.length;i++){
+				System.out.print(names[i] + " : ");
+				System.out.println(arr[i]);
+			}
+			System.out.println();
+		}
+
+		else System.out.println(e.toDebugString());
+
+	}
+	private String[] getNames(REXP rexp){
+		RList rl = rexp._attr().asList();
+		return ((REXPString) rl.at("names")).asStrings();
 	}
 
 	private boolean appendParameters(Map<String, String> hyperParameters,REXP env) throws REXPMismatchException, REngineException {
@@ -291,8 +372,8 @@ public class RExtension {
 		LOGGER.debug("#Using library pmml");
 		LOGGER.trace("library(pmml)");
 		re.parseAndEval("library(pmml)", env, false);
-		LOGGER.trace("modelpmml <- pmml(model)");
-		re.parseAndEval("modelpmml <- pmml(model)", env, false);
+		LOGGER.trace("modelpmml <- pmml(model$finalModel)");
+		re.parseAndEval("modelpmml <- pmml(model$finalModel)", env, false);
 
 		StringBuffer locationBuffer = new StringBuffer(exportLocation);
 
