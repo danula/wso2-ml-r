@@ -1,24 +1,18 @@
 package org.wso2.carbon.ml.extension;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
-
 import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
-import org.rosuda.REngine.*;
 import org.rosuda.REngine.JRI.JRIEngine;
+import org.rosuda.REngine.*;
+import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.Constants;
 import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
-import com.google.gson.*;
 
-import sun.rmi.runtime.Log;
+import java.util.List;
+import java.util.Map;
 
 public class RExtension {
 
@@ -47,11 +41,10 @@ public class RExtension {
 	 * 
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLWorkflow mlWorkflow) throws REngineException, REXPMismatchException {
-		evaluate(mlWorkflow, "");
+	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
+		initializeScript(mlWorkflow, "");
 	}
 
 	/**
@@ -60,14 +53,11 @@ public class RExtension {
 	 * 
 	 * @param workflowURL
 	 *            absolute location of the JSON mapped workflow
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
+	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL) throws FileNotFoundException, IOException,
-			ParseException, REngineException, REXPMismatchException, FormattingException, InitializationException {
+	public void evaluate(String workflowURL) throws FormattingException, InitializationException, EvaluationException {
 		evaluate(workflowURL, "");
 	}
 
@@ -79,105 +69,118 @@ public class RExtension {
 	 *            absolute location of the JSON mapped workflow
 	 * @param exportLocation
 	 *            absolute path to the exported PMML file
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
+	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL, String exportLocation) throws FileNotFoundException,
-			IOException, ParseException,
-			REngineException,
-			REXPMismatchException, FormattingException, InitializationException {
+	public void evaluate(String workflowURL, String exportLocation) throws FormattingException, InitializationException, EvaluationException {
 		InitializeWorkflow init = new InitializeWorkflow();
 		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
-		evaluate(mlWorkflow, exportLocation);
+		initializeScript(mlWorkflow, exportLocation);
 	}
 
 	/**
 	 * Evaluates {@link MLWorkflow}
-	 * 
+	 *
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
 	 * @param exportLocation
 	 *            absolute path to the exported PMML file
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
+	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
+		initializeScript(mlWorkflow, exportLocation);
+	}
 
-	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REngineException,
+	private void initializeScript(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
+		StringBuffer tempBuffer = new StringBuffer();
+
+		try {
+			REXP env = re.newEnvironment(null, true);
+
+			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
+			re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
+			LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
+
+			List<MLFeature> features = mlWorkflow.getFeatures();
+
+			if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
+				// for classification
+				tempBuffer.append(mlWorkflow.getResponseVariable());
+				tempBuffer.append(" ~ ");
+
+				boolean flag = false;
+
+				for (int i = 0; i < features.size(); i++) {
+					MLFeature feature = features.get(i);
+					if (feature.isInclude()) {
+						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
+							if (flag)
+								tempBuffer.append("+");
+							tempBuffer.append(feature.getName());
+							flag = true;
+						}
+
+						if (feature.getType().equals("CATEGORICAL"))
+							defineCategoricalData(feature, env);
+
+						impute(feature, env);
+					}
+				}
+
+				tempBuffer.append(", method =");
+				tempBuffer.append("'" + Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName()) + "'");
+
+				tempBuffer.append(",data=input");
+
+			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
+				// for clustering
+				tempBuffer.append("x = input$");
+				tempBuffer.append(mlWorkflow.getResponseVariable());
+
+				for (int i = 0; i < features.size(); i++) {
+					MLFeature feature = features.get(i);
+					if (feature.isInclude()) {
+
+						if (feature.getType().equals("CATEGORICAL"))
+							defineCategoricalData(feature, env);
+
+						impute(feature, env);
+					}
+				}
+
+			}
+
+			runScript(mlWorkflow, env, tempBuffer);
+
+		} catch (REngineException e) {
+			LOGGER.error(e.getMessage());
+			throw new EvaluationException("Operation requested cannot be executed in R", e);
+		} catch (REXPMismatchException e) {
+			LOGGER.error(e.getMessage());
+			throw new EvaluationException("Operation requested is not supported by the given R object type", e);
+		}
+	}
+
+	private void runScript(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
 	                                                                  REXPMismatchException {
 
-		re.parseAndEval("library(caret)");
+
+		re.parseAndEval("library('caret')");
+		LOGGER.trace("library('caret')");
 		re.parseAndEval("data(iris)");
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
 		re.parseAndEval("model <- train(Species~., data=iris, trControl=train_control, method='nb')");
 
 
-
 		script = new StringBuffer();
-		REXP env = null;//re.newEnvironment(null, true);
-		re.parseAndEval("library('caret')");
-		LOGGER.trace("library('caret')");
-		LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
-		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
-		LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
 
 		re.parseAndEval("train_control <- trainControl(method='cv', number=10)",env,false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(");
 
-
-
-		List<MLFeature> features = mlWorkflow.getFeatures();
-
-		if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
-			// for classification
-			script.append(mlWorkflow.getResponseVariable());
-			script.append(" ~ ");
-
-			boolean flag = false;
-
-			for (int i = 0; i < features.size(); i++) {
-				MLFeature feature = features.get(i);
-				if (feature.isInclude()) {
-					if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
-						if (flag)
-							script.append("+");
-						script.append(feature.getName());
-						flag = true;
-					}
-					
-					if (feature.getType().equals("CATEGORICAL"))
-						defineCategoricalData(feature, env);
-
-					impute(feature, env);
-				}
-			}
-
-			script.append(", method =");
-			script.append("'"+ Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())+"'");
-
-			script.append(",data=input");
-
-		} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
-			// for clustering
-			script.append("x = input$");
-			script.append(mlWorkflow.getResponseVariable());
-
-			for (int i = 0; i < features.size(); i++) {
-				MLFeature feature = features.get(i);
-				if (feature.isInclude()) {
-
-					if (feature.getType().equals("CATEGORICAL"))
-						defineCategoricalData(feature, env);
-
-					impute(feature, env);
-				}
-			}
-
-		}
+		script.append(tempBuffer);
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
