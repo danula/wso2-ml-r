@@ -17,7 +17,7 @@ import java.util.Map;
 public class RExtension {
 
 	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
-	private REngine re;
+	public static REngine re = null;
 	private StringBuffer script;
 
 	/**
@@ -26,7 +26,7 @@ public class RExtension {
 	 * @throws REngineException
 	 */
 	public RExtension() throws REngineException {
-		this.re = JRIEngine.createEngine();
+		re = JRIEngine.createEngine();
 	}
 
 	/**
@@ -111,8 +111,7 @@ public class RExtension {
 
 				boolean flag = false;
 
-				for (int i = 0; i < features.size(); i++) {
-					MLFeature feature = features.get(i);
+				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
 						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 							if (flag)
@@ -138,8 +137,7 @@ public class RExtension {
 				tempBuffer.append("x = input$");
 				tempBuffer.append(mlWorkflow.getResponseVariable());
 
-				for (int i = 0; i < features.size(); i++) {
-					MLFeature feature = features.get(i);
+				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
 
 						if (feature.getType().equals("CATEGORICAL"))

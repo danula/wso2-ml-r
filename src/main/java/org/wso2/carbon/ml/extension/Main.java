@@ -1,12 +1,8 @@
 package org.wso2.carbon.ml.extension;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import org.apache.log4j.Logger;
-import org.json.simple.parser.ParseException;
-import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
+import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 
@@ -15,36 +11,26 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class);
 
     public static void main(String[] args) {
-        LOGGER.trace("hello");
+    	long st = System.currentTimeMillis();
+        RExtension rex = null;
         try {
-            long st = System.currentTimeMillis();
-            RExtension rex = new RExtension();
-            try {
-                rex.evaluate("src/test/resources/workflow-3.json", "/home/danula/test3.pmml");
-            } catch (FormattingException e) {
-                e.printStackTrace();
-            } catch (InitializationException e) {
-                e.printStackTrace();
-            }
-            long end = System.currentTimeMillis();
-            LOGGER.info(end-st);
-
+            rex = new RExtension();
+            rex.evaluate("src/test/resources/workflow-3.json");
+            RExtension.re.close();
         } catch (REngineException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
+        } catch (FormattingException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
+        } catch (EvaluationException e) {
             e.printStackTrace();
-        } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (REXPMismatchException e) {
-            // TODO Auto-generated catch block
+        } catch (InitializationException e) {
             e.printStackTrace();
         }
+        
+        long en = System.currentTimeMillis();
+        System.out.println(en-st);
+
+
     }
 
 }
