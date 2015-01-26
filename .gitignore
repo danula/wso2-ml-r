@@ -1,5 +1,6 @@
 #idea settings
 .idea
+*.iml
 
 #eclipse settings
 .project
