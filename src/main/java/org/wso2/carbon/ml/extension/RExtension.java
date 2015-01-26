@@ -93,87 +93,94 @@ public class RExtension {
 	}
 
 	private void initializeScript(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
+		StringBuffer tempBuffer = new StringBuffer();
+
 		try {
 			REXP env = re.newEnvironment(null, true);
+
+			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
+			re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
+			LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
+
+			List<MLFeature> features = mlWorkflow.getFeatures();
+
+			if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
+				// for classification
+				tempBuffer.append(mlWorkflow.getResponseVariable());
+				tempBuffer.append(" ~ ");
+
+				boolean flag = false;
+
+				for (int i = 0; i < features.size(); i++) {
+					MLFeature feature = features.get(i);
+					if (feature.isInclude()) {
+						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
+							if (flag)
+								tempBuffer.append("+");
+							tempBuffer.append(feature.getName());
+							flag = true;
+						}
+
+						if (feature.getType().equals("CATEGORICAL"))
+							defineCategoricalData(feature, env);
+
+						impute(feature, env);
+					}
+				}
+
+				tempBuffer.append(", method =");
+				tempBuffer.append("'" + Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName()) + "'");
+
+				tempBuffer.append(",data=input");
+
+			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
+				// for clustering
+				tempBuffer.append("x = input$");
+				tempBuffer.append(mlWorkflow.getResponseVariable());
+
+				for (int i = 0; i < features.size(); i++) {
+					MLFeature feature = features.get(i);
+					if (feature.isInclude()) {
+
+						if (feature.getType().equals("CATEGORICAL"))
+							defineCategoricalData(feature, env);
+
+						impute(feature, env);
+					}
+				}
+
+			}
+
+			runScript(mlWorkflow, env, tempBuffer);
+
 		} catch (REngineException e) {
+			LOGGER.error(e.getMessage());
 			throw new EvaluationException("Operation requested cannot be executed in R", e);
 		} catch (REXPMismatchException e) {
+			LOGGER.error(e.getMessage());
 			throw new EvaluationException("Operation requested is not supported by the given R object type", e);
 		}
 	}
 
-	private void runScript(MLWorkflow mlWorkflow, REXP env) throws REngineException,
+	private void runScript(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
 	                                                                  REXPMismatchException {
 
-		re.parseAndEval("library(caret)");
+
+		re.parseAndEval("library('caret')");
+		LOGGER.trace("library('caret')");
 		re.parseAndEval("data(iris)");
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
 		re.parseAndEval("model <- train(Species~., data=iris, trControl=train_control, method='nb')");
 
 
-
 		script = new StringBuffer();
-		re.parseAndEval("library('caret')");
-		LOGGER.trace("library('caret')");
-		LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
-		re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
-		LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
 
 		re.parseAndEval("train_control <- trainControl(method='cv', number=10)",env,false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(");
 
-
-
-		List<MLFeature> features = mlWorkflow.getFeatures();
-
-		if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
-			// for classification
-			script.append(mlWorkflow.getResponseVariable());
-			script.append(" ~ ");
-
-			boolean flag = false;
-
-			for (int i = 0; i < features.size(); i++) {
-				MLFeature feature = features.get(i);
-				if (feature.isInclude()) {
-					if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
-						if (flag)
-							script.append("+");
-						script.append(feature.getName());
-						flag = true;
-					}
-					
-					if (feature.getType().equals("CATEGORICAL"))
-						defineCategoricalData(feature, env);
-
-					impute(feature, env);
-				}
-			}
-
-			script.append(", method =");
-			script.append("'"+ Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())+"'");
-
-			script.append(",data=input");
-
-		} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
-			// for clustering
-			script.append("x = input$");
-			script.append(mlWorkflow.getResponseVariable());
-
-			for (int i = 0; i < features.size(); i++) {
-				MLFeature feature = features.get(i);
-				if (feature.isInclude()) {
-
-					if (feature.getType().equals("CATEGORICAL"))
-						defineCategoricalData(feature, env);
-
-					impute(feature, env);
-				}
-			}
-
-		}
+		script.append(tempBuffer);
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
