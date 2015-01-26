@@ -3,6 +3,7 @@ package org.wso2.carbon.ml.extension;
 import org.apache.log4j.Logger;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.rosuda.REngine.*;
+import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
@@ -40,11 +41,10 @@ public class RExtension {
 	 * 
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLWorkflow mlWorkflow) throws REngineException, REXPMismatchException {
-		runScript(mlWorkflow, "");
+	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
+		initializeScript(mlWorkflow, "");
 	}
 
 	/**
@@ -55,10 +55,9 @@ public class RExtension {
 	 *            absolute location of the JSON mapped workflow
 	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL) throws REngineException, REXPMismatchException, FormattingException, InitializationException {
+	public void evaluate(String workflowURL) throws FormattingException, InitializationException, EvaluationException {
 		evaluate(workflowURL, "");
 	}
 
@@ -72,10 +71,9 @@ public class RExtension {
 	 *            absolute path to the exported PMML file
 	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL, String exportLocation) throws REngineException, REXPMismatchException, FormattingException, InitializationException {
+	public void evaluate(String workflowURL, String exportLocation) throws FormattingException, InitializationException, EvaluationException {
 		InitializeWorkflow init = new InitializeWorkflow();
 		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
 		initializeScript(mlWorkflow, exportLocation);
@@ -88,18 +86,23 @@ public class RExtension {
 	 *            MLWorkflow bean
 	 * @param exportLocation
 	 *            absolute path to the exported PMML file
-	 * @throws REngineException
-	 * @throws REXPMismatchException
+	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws REXPMismatchException, REngineException {
+	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
 		initializeScript(mlWorkflow, exportLocation);
 	}
 
-	private void initializeScript(MLWorkflow mlWorkflow, String exportLocation){
-
+	private void initializeScript(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
+		try {
+			REXP env = re.newEnvironment(null, true);
+		} catch (REngineException e) {
+			throw new EvaluationException("Operation requested cannot be executed in R", e);
+		} catch (REXPMismatchException e) {
+			throw new EvaluationException("Operation requested is not supported by the given R object type", e);
+		}
 	}
 
-	private void runScript(MLWorkflow mlWorkflow) throws REngineException,
+	private void runScript(MLWorkflow mlWorkflow, REXP env) throws REngineException,
 	                                                                  REXPMismatchException {
 
 		re.parseAndEval("library(caret)");
@@ -110,7 +113,6 @@ public class RExtension {
 
 
 		script = new StringBuffer();
-		REXP env = null;//re.newEnvironment(null, true);
 		re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 		LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
