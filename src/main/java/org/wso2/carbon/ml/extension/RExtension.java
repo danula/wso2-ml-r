@@ -30,6 +30,13 @@ public class RExtension {
 	}
 
 	/**
+	 * Destroy the REngine
+	 */
+	public void destroy(){
+		RExtension.re.close();
+	}
+
+	/**
 	 * @return the script
 	 */
 	public StringBuffer getScript() {
