@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
 import org.json.simple.parser.ParseException;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
+import org.wso2.carbon.ml.extension.exception.FormattingException;
+import org.wso2.carbon.ml.extension.exception.InitializationException;
 
 public class Main {
 
@@ -17,7 +19,13 @@ public class Main {
         try {
             long st = System.currentTimeMillis();
             RExtension rex = new RExtension();
-            rex.evaluate("src/test/resources/workflow-3.json", "/home/danula/test3.pmml");
+            try {
+                rex.evaluate("src/test/resources/workflow-3.json", "/home/danula/test3.pmml");
+            } catch (FormattingException e) {
+                e.printStackTrace();
+            } catch (InitializationException e) {
+                e.printStackTrace();
+            }
             long end = System.currentTimeMillis();
             LOGGER.info(end-st);
 
