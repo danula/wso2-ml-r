@@ -16,6 +16,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wso2.carbon.ml.extension.RExtension;
+import org.wso2.carbon.ml.extension.exception.FormattingException;
+import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
@@ -33,13 +35,30 @@ public class InitializeWorkflow {
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
-	public MLWorkflow parseWorkflow(String fileURL) throws FileNotFoundException, IOException, ParseException {
+	public MLWorkflow parseWorkflow(String fileURL) throws InitializationException, FormattingException {
 		
 		LOGGER.debug("Parsing Workflow");
 		JSONParser parser = new JSONParser();
 		JSONObject workflow = null;
 
-		Object obj = parser.parse(new FileReader(fileURL));
+		FileReader fr = null;
+		try {
+			fr = new FileReader(fileURL);
+		} catch (FileNotFoundException e) {
+			LOGGER.error(e.getMessage());
+			throw new InitializationException("Workflow JSON file does not exist", e);
+		}
+
+		Object obj = null;
+		try {
+			obj = parser.parse(fr);
+		} catch (IOException e) {
+			LOGGER.error(e.getMessage());
+			throw new InitializationException("Workflow JSON file cannot be read", e);
+		} catch (ParseException e) {
+			LOGGER.error(e.getMessage());
+			throw new FormattingException("Formatting error in "+fileURL, e);
+		}
 
 		workflow = (JSONObject) obj;
 
