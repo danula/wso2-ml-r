@@ -4,12 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
@@ -18,18 +15,18 @@ import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
 /**
- * Test cases related to {@link InitializeWorkflow}
+ * Test cases related to {@link WorkflowParser}
  *
  */
-public class InitializeWorkflowTestCase {
+public class WorkflowParserTestCase {
 
 	private static final String RESOURCE_LOCATION = "src/test/resources/workflow-3.json";
 	MLWorkflow workflow;
-	InitializeWorkflow init;
+	WorkflowParser init;
 	
 	@Before
 	public void setup() {
-		 init = new InitializeWorkflow();
+		 init = new WorkflowParser();
 		try {
 			workflow = init.parseWorkflow(RESOURCE_LOCATION);
 		}  catch (FormattingException e) {

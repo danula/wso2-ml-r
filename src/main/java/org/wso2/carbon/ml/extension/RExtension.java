@@ -10,7 +10,7 @@ import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
 import org.wso2.carbon.ml.extension.model.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.Constants;
-import org.wso2.carbon.ml.extension.util.InitializeWorkflow;
+import org.wso2.carbon.ml.extension.util.WorkflowParser;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +24,7 @@ public class RExtension {
 	/**
 	 * Default constructor for {@link RExtension}. Creates a REngine instance.
 	 * 
-	 * @throws REngineException
+	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 */
 	public RExtension() throws InitializationException{
 		PropertyConfigurator.configure("log4j.properties");
@@ -40,7 +40,8 @@ public class RExtension {
 	 * Destroy the REngine
 	 */
 	public void destroy(){
-		RExtension.re.close();
+		if(RExtension.re == null)
+			RExtension.re.close();
 	}
 
 	/**
@@ -58,7 +59,7 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
-		initializeScript(mlWorkflow, "");
+		runScript(mlWorkflow, Constants.DEFAULT_EXPORT_PATH);
 	}
 
 	/**
@@ -72,7 +73,7 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(String workflowURL) throws FormattingException, InitializationException, EvaluationException {
-		evaluate(workflowURL, "");
+		evaluate(workflowURL, Constants.DEFAULT_EXPORT_PATH);
 	}
 
 	/**
@@ -81,16 +82,16 @@ public class RExtension {
 	 * 
 	 * @param workflowURL
 	 *            absolute location of the JSON mapped workflow
-	 * @param exportLocation
+	 * @param exportPath
 	 *            absolute path to the exported PMML file
 	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL, String exportLocation) throws FormattingException, InitializationException, EvaluationException {
-		InitializeWorkflow init = new InitializeWorkflow();
-		MLWorkflow mlWorkflow = init.parseWorkflow(workflowURL);
-		initializeScript(mlWorkflow, exportLocation);
+	public void evaluate(String workflowURL, String exportPath) throws FormattingException, InitializationException, EvaluationException {
+		WorkflowParser parser = new WorkflowParser();
+		MLWorkflow mlWorkflow = parser.parseWorkflow(workflowURL);
+		runScript(mlWorkflow, exportPath);
 	}
 
 	/**
@@ -98,15 +99,15 @@ public class RExtension {
 	 *
 	 * @param mlWorkflow
 	 *            MLWorkflow bean
-	 * @param exportLocation
+	 * @param exportPath
 	 *            absolute path to the exported PMML file
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
-		initializeScript(mlWorkflow, exportLocation);
+	public void evaluate(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
+		runScript(mlWorkflow, exportPath);
 	}
 
-	private void initializeScript(MLWorkflow mlWorkflow, String exportLocation) throws EvaluationException {
+	private void runScript(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
 		StringBuffer tempBuffer = new StringBuffer();
 
 		try {
@@ -119,7 +120,6 @@ public class RExtension {
 			List<MLFeature> features = mlWorkflow.getFeatures();
 
 			if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
-				// for classification
 				tempBuffer.append(mlWorkflow.getResponseVariable());
 				tempBuffer.append(" ~ ");
 
@@ -140,11 +140,9 @@ public class RExtension {
 						impute(feature, env);
 					}
 				}
-
-
+				trainModel(mlWorkflow, env, tempBuffer);
 
 			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
-				// for clustering
 				tempBuffer.append("x = input$");
 				tempBuffer.append(mlWorkflow.getResponseVariable());
 
@@ -160,8 +158,6 @@ public class RExtension {
 
 			}
 
-			runScript(mlWorkflow, env, tempBuffer);
-
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
 			throw new EvaluationException("Operation requested cannot be executed in R", e);
@@ -171,10 +167,8 @@ public class RExtension {
 		}
 	}
 
-	private void runScript(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
+	private void trainModel(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
 	                                                                  REXPMismatchException {
-
-
 		re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 
@@ -212,14 +206,11 @@ public class RExtension {
 		REXP out = re.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
 		LOGGER.trace("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")");
 
-
-		//System.out.println(JSONConverter.convertToJSONString(out));
-
 		StringBuffer script2 = new StringBuffer();
 
 		script2.append("bestModel<-");
 		script2.append("NaiveBayes(");
-		script2.append(tempBuffer.toString());
+		script2.append(tempBuffer);
 		script2.append(",data=input");
 
 		REXP bestTune = re.parseAndEval("model$bestTune", env, true);
@@ -233,15 +224,6 @@ public class RExtension {
 		re.parseAndEval(script2.toString(),env,false);
 		LOGGER.trace(script2.toString());
 
-		//System.out.println(out.toDebugString());
-
-		//print(out);
-
-		//REXP inp = re.parseAndEval("input", env, true);
-		//System.out.println(inp.toDebugString());
-
-		//System.out.println(x.toDebugString());
-		// exporting the model in PMML format
 		exportToPMML(env, "/home/danula/test4.pmml");
 
 	}
@@ -452,7 +434,7 @@ public class RExtension {
 
 	}
 
-	private void exportToPMML(REXP env, String exportLocation) throws REngineException,
+	private void exportToPMML(REXP env, String exportPath) throws REngineException,
 	                                                          REXPMismatchException {
 
 		LOGGER.debug("#Exporting to PMML");
@@ -462,19 +444,19 @@ public class RExtension {
 		LOGGER.trace("modelpmml <- pmml(bestModel)");
 		re.parseAndEval("modelpmml <- pmml(bestModel)", env, false);
 
-		StringBuffer locationBuffer = new StringBuffer(exportLocation);
+		StringBuffer locationBuffer = new StringBuffer(exportPath);
 
 		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
 		buffer.append(locationBuffer);
 
-		if (exportLocation.trim().equals(""))
+		if (exportPath.trim().equals(""))
 			buffer.append("model.pmml')");
 		else
 			buffer.append("')");
 
 		re.parseAndEval(buffer.toString(), env, false);
 		LOGGER.trace(buffer.toString());
-		LOGGER.debug("#Export Success - Location: " + exportLocation);
+		LOGGER.debug("#Export Success - Location: " + exportPath);
 
 	}
 

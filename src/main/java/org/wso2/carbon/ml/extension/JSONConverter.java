@@ -4,13 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.rosuda.REngine.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by danula on 1/26/15.
- */
 public class JSONConverter {
     public static String convertToJSONString(REXP e){
         GsonBuilder builder = new GsonBuilder();

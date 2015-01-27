@@ -6,6 +6,10 @@ import java.util.Map;
 public class Constants {
 
     /**
+     * Default export path of the PMML model
+     */
+    public static final String DEFAULT_EXPORT_PATH = "/home/"+System.getProperty("user.name")+"/model.pmml";
+    /**
      * Maps the algorithm names with R function names
      */
     public static final Map<String, String> ALGORITHM_MAP = new HashMap<>();

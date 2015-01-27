@@ -15,9 +15,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-public class InitializeWorkflow {
+public class WorkflowParser {
 
-    private final static Logger LOGGER = Logger.getLogger(InitializeWorkflow.class);
+    private final static Logger LOGGER = Logger.getLogger(WorkflowParser.class);
 
     /**
      * Parses Workflow JSON file

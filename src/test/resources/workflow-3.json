@@ -1,5 +1,5 @@
 { "algorithmClass" : "Classification",
-  "algorithmName" : "LOGISTIC_REGRESSION",
+  "algorithmName" : "NAIVE_BAYES",
   "datasetURL" : "src/test/resources/dataset-3.csv",
   "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
         "include" : true,
@@ -56,7 +56,7 @@
         "type" : "NUMERICAL"
       }
     ],
-  "hyperParameters" : { "family" : "binomial"},
+  "hyperParameters" : { },
   "responseVariable" : "Class",
   "trainDataFraction" : 0.69999999999999996,
   "workflowID" : "b9e108cb-0335-43b9-83ca-3cf1b207543e"
