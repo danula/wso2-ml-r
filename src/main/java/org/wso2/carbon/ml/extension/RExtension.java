@@ -1,6 +1,7 @@
 package org.wso2.carbon.ml.extension;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.rosuda.REngine.*;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class RExtension {
 
 	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
-	private REngine re;
+	public static REngine re = null;
 	private StringBuffer script;
 
 	/**
@@ -25,8 +26,21 @@ public class RExtension {
 	 * 
 	 * @throws REngineException
 	 */
-	public RExtension() throws REngineException {
-		this.re = JRIEngine.createEngine();
+	public RExtension() throws InitializationException{
+		PropertyConfigurator.configure("log4j.properties");
+		try {
+			re = JRIEngine.createEngine();
+		} catch (REngineException e) {
+			LOGGER.error(e.getMessage());
+			throw new InitializationException("Cannot create R Engine", e);
+		}
+	}
+
+	/**
+	 * Destroy the REngine
+	 */
+	public void destroy(){
+		RExtension.re.close();
 	}
 
 	/**
@@ -111,8 +125,7 @@ public class RExtension {
 
 				boolean flag = false;
 
-				for (int i = 0; i < features.size(); i++) {
-					MLFeature feature = features.get(i);
+				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
 						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 							if (flag)
@@ -138,8 +151,7 @@ public class RExtension {
 				tempBuffer.append("x = input$");
 				tempBuffer.append(mlWorkflow.getResponseVariable());
 
-				for (int i = 0; i < features.size(); i++) {
-					MLFeature feature = features.get(i);
+				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
 
 						if (feature.getType().equals("CATEGORICAL"))
@@ -170,12 +182,13 @@ public class RExtension {
 		LOGGER.trace("library('caret')");
 		re.parseAndEval("data(iris)");
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
+		/*Should install klaR, MASS and is libraries: ADD to documentation*/
 		re.parseAndEval("model <- train(Species~., data=iris, trControl=train_control, method='nb')");
 
 
 		script = new StringBuffer();
 
-		re.parseAndEval("train_control <- trainControl(method='cv', number=10)",env,false);
+		re.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(");
