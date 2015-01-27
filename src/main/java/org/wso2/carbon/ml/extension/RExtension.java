@@ -141,10 +141,7 @@ public class RExtension {
 					}
 				}
 
-				tempBuffer.append(", method =");
-				tempBuffer.append("'" + Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName()) + "'");
 
-				tempBuffer.append(",data=input");
 
 			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
 				// for clustering
@@ -194,6 +191,10 @@ public class RExtension {
 
 		script.append(tempBuffer);
 
+		script.append(", method =");
+		script.append("'" + Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName()) + "'");
+
+		script.append(",data=input");
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		if(appendParameters(hyperParameters,env)){
@@ -212,17 +213,27 @@ public class RExtension {
 		LOGGER.trace("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")");
 
 
-		System.out.println(JSONConverter.convertToJSONString(out));
+		//System.out.println(JSONConverter.convertToJSONString(out));
+
+		StringBuffer script2 = new StringBuffer();
+
+		script2.append("bestModel<-");
+		script2.append("NaiveBayes(");
+		script2.append(tempBuffer.toString());
+		script2.append(",data=input");
 
 		REXP bestTune = re.parseAndEval("model$bestTune", env, true);
 		String[] names = bestTune._attr().asList().at("names").asStrings();
 		RList values = bestTune.asList();
 		for(int i=0;i<names.length;i++){
-			System.out.println(names[i]+" "+JSONConverter.getDataElement(values.at(i)));
+			script2.append(","+names[i]+"="+JSONConverter.getDataElement(values.at(i)));
 		}
-		
 
-		System.out.println(out.toDebugString());
+		script2.append(")");
+		re.parseAndEval(script2.toString(),env,false);
+		LOGGER.trace(script2.toString());
+
+		//System.out.println(out.toDebugString());
 
 		//print(out);
 
@@ -231,7 +242,7 @@ public class RExtension {
 
 		//System.out.println(x.toDebugString());
 		// exporting the model in PMML format
-		//exportToPMML(env, exportLocation);
+		exportToPMML(env, "/home/danula/test4.pmml");
 
 	}
 
@@ -448,8 +459,8 @@ public class RExtension {
 		LOGGER.debug("#Using library pmml");
 		LOGGER.trace("library(pmml)");
 		re.parseAndEval("library(pmml)", env, false);
-		LOGGER.trace("modelpmml <- pmml(model$finalModel)");
-		re.parseAndEval("modelpmml <- pmml(model$finalModel)", env, false);
+		LOGGER.trace("modelpmml <- pmml(bestModel)");
+		re.parseAndEval("modelpmml <- pmml(bestModel)", env, false);
 
 		StringBuffer locationBuffer = new StringBuffer(exportLocation);
 
