@@ -40,7 +40,7 @@ public class RExtension {
 	 * Destroy the REngine
 	 */
 	public void destroy(){
-		if(RExtension.re == null)
+		if(RExtension.re != null)
 			RExtension.re.close();
 	}
 
@@ -108,20 +108,21 @@ public class RExtension {
 	}
 
 	private void runScript(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
-		StringBuffer tempBuffer = new StringBuffer();
+		StringBuffer fieldBuffer = new StringBuffer();
 
 		try {
 			REXP env = re.newEnvironment(null, true);
+			REXP bestTune = null;
 
 			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
 			re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
-			LOGGER.trace("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')");
+			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/src/test/resources/dataset-3.csv')");
 
 			List<MLFeature> features = mlWorkflow.getFeatures();
 
 			if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
-				tempBuffer.append(mlWorkflow.getResponseVariable());
-				tempBuffer.append(" ~ ");
+				fieldBuffer.append(mlWorkflow.getResponseVariable());
+				fieldBuffer.append(" ~ ");
 
 				boolean flag = false;
 
@@ -129,8 +130,8 @@ public class RExtension {
 					if (feature.isInclude()) {
 						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 							if (flag)
-								tempBuffer.append("+");
-							tempBuffer.append(feature.getName());
+								fieldBuffer.append("+");
+							fieldBuffer.append(feature.getName());
 							flag = true;
 						}
 
@@ -140,11 +141,10 @@ public class RExtension {
 						impute(feature, env);
 					}
 				}
-				trainModel(mlWorkflow, env, tempBuffer);
-
+				bestTune = trainModel(mlWorkflow, env, fieldBuffer);
 			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
-				tempBuffer.append("x = input$");
-				tempBuffer.append(mlWorkflow.getResponseVariable());
+				fieldBuffer.append("x = input$");
+				fieldBuffer.append(mlWorkflow.getResponseVariable());
 
 				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
@@ -158,6 +158,8 @@ public class RExtension {
 
 			}
 
+			exportModel(mlWorkflow, fieldBuffer, bestTune, env, exportPath);
+
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
 			throw new EvaluationException("Operation requested cannot be executed in R", e);
@@ -167,7 +169,7 @@ public class RExtension {
 		}
 	}
 
-	private void trainModel(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
+	private REXP trainModel(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
 	                                                                  REXPMismatchException {
 		re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
@@ -206,33 +208,15 @@ public class RExtension {
 		REXP out = re.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
 		LOGGER.trace("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")");
 
-		StringBuffer script2 = new StringBuffer();
-
-		script2.append("bestModel<-");
-		script2.append("NaiveBayes(");
-		script2.append(tempBuffer);
-		script2.append(",data=input");
-
 		REXP bestTune = re.parseAndEval("model$bestTune", env, true);
-		String[] names = bestTune._attr().asList().at("names").asStrings();
-		RList values = bestTune.asList();
-		for(int i=0;i<names.length;i++){
-			script2.append(","+names[i]+"="+JSONConverter.getDataElement(values.at(i)));
-		}
 
-		script2.append(")");
-		re.parseAndEval(script2.toString(),env,false);
-		LOGGER.trace(script2.toString());
-
-		exportToPMML(env, "/home/danula/test4.pmml");
-
+		return bestTune;
 	}
 
 	private String[] getNames(REXP rexp){
 		RList rl = rexp._attr().asList();
 		return ((REXPString) rl.at("names")).asStrings();
 	}
-
 
 	private void print(REXP e) {
 		//System.out.println(e.toDebugString());
@@ -385,8 +369,6 @@ public class RExtension {
 		else if(e instanceof REXPSymbol){
 
 		}
-		else System.out.println(e.toDebugString());
-
 	}
 
 	private boolean appendParameters(Map<String, String> hyperParameters,REXP env) throws REXPMismatchException, REngineException {
@@ -437,8 +419,31 @@ public class RExtension {
 	private void exportToPMML(REXP env, String exportPath) throws REngineException,
 	                                                          REXPMismatchException {
 
-		LOGGER.debug("#Exporting to PMML");
-		LOGGER.debug("#Using library pmml");
+
+
+	}
+
+	private void exportModel(MLWorkflow mlWorkflow, StringBuffer fieldBuffer, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
+
+		StringBuffer parameters = new StringBuffer();
+
+		parameters.append(fieldBuffer);
+		parameters.append(",data=input");
+
+		String[] names = bestTune._attr().asList().at("names").asStrings();
+		RList values = bestTune.asList();
+
+		for(int i = 0; i < names.length; ++i) {
+			parameters.append("," + names[i] + "=" + JSONConverter.getDataElement(values.at(i)));
+		}
+
+		switch(mlWorkflow.getAlgorithmName()){
+			case "NAIVE_BAYES":
+				naiveBayes(mlWorkflow, env, parameters, exportPath);
+				return;
+		}
+
+		LOGGER.debug("#Exporting to PMML. Using library pmml");
 		LOGGER.trace("library(pmml)");
 		re.parseAndEval("library(pmml)", env, false);
 		LOGGER.trace("modelpmml <- pmml(bestModel)");
@@ -449,15 +454,33 @@ public class RExtension {
 		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
 		buffer.append(locationBuffer);
 
-		if (exportPath.trim().equals(""))
-			buffer.append("model.pmml')");
-		else
-			buffer.append("')");
+		buffer.append("')");
 
 		re.parseAndEval(buffer.toString(), env, false);
 		LOGGER.trace(buffer.toString());
 		LOGGER.debug("#Export Success - Location: " + exportPath);
-
 	}
 
+	private void naiveBayes(MLWorkflow mlWorkflow, REXP env, StringBuffer parameters, String exportPath) throws REXPMismatchException, REngineException {
+		StringBuffer nbScript = new StringBuffer();
+
+		nbScript.append("bestModel<-");
+		nbScript.append("naiveBayes(");
+		nbScript.append(parameters);
+		nbScript.append(")");
+
+		LOGGER.trace("library('e1071')");
+		re.parseAndEval("library('e1071')");
+		LOGGER.trace(nbScript.toString());
+		re.parseAndEval(nbScript.toString(),env,false);
+
+		LOGGER.trace("library('pmml')");
+		re.parseAndEval("library('pmml')");
+		LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
+		re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
+
+		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
+		buffer.append(exportPath);
+		buffer.append("')");
+	}
 }
