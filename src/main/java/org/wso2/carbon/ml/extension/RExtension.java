@@ -180,11 +180,10 @@ public class RExtension {
 
 		re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
-		re.parseAndEval("data(iris)");
+
+
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
 		/*Should install klaR, MASS and is libraries: ADD to documentation*/
-		re.parseAndEval("model <- train(Species~., data=iris, trControl=train_control, method='nb')");
-
 
 		script = new StringBuffer();
 
@@ -206,13 +205,25 @@ public class RExtension {
 
 		// evaluating the R script
 		re.parseAndEval(script.toString(), env, false);
-		re.parseAndEval("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])", env, false);
+		re.parseAndEval("prediction<-predict(model,input[-match('" + mlWorkflow.getResponseVariable() + "',names(input))])", env, false);
 		LOGGER.trace("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])");
 
 		REXP out = re.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
 		LOGGER.trace("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")");
-		//out = re.parseAndEval("prediction", env, true);
+
+
+		System.out.println(JSONConverter.convertToJSONString(out));
+
+		REXP bestTune = re.parseAndEval("model$bestTune", env, true);
+		String[] names = bestTune._attr().asList().at("names").asStrings();
+		RList values = bestTune.asList();
+		for(int i=0;i<names.length;i++){
+			System.out.println(names[i]+" "+JSONConverter.getDataElement(values.at(i)));
+		}
+		
+
 		System.out.println(out.toDebugString());
+
 		//print(out);
 
 		//REXP inp = re.parseAndEval("input", env, true);

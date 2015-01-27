@@ -84,4 +84,17 @@ public class JSONConverter {
         return jo;
     }
 
+    public static String getDataElement(REXP rexp){
+        if(rexp instanceof REXPInteger){
+            return Integer.toString(((REXPInteger) rexp).asIntegers()[0]);
+        }else if(rexp instanceof REXPDouble){
+            return Double.toString(((REXPDouble)rexp).asDoubles()[0]);
+        }else if(rexp instanceof REXPString){
+            return ((REXPString)rexp).asStrings()[0];
+        }else if(rexp instanceof REXPLogical){
+            return ((REXPLogical)rexp).asStrings()[0];
+        }
+        return null;
+    }
+
 }
