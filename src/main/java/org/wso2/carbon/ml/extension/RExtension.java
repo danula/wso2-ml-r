@@ -178,16 +178,17 @@ public class RExtension {
 	                                                                  REXPMismatchException {
 
 
-		//re.parseAndEval("library('caret')");
+		re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 		re.parseAndEval("data(iris)");
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
+		/*Should install klaR, MASS and is libraries: ADD to documentation*/
 		re.parseAndEval("model <- train(Species~., data=iris, trControl=train_control, method='nb')");
 
 
 		script = new StringBuffer();
 
-		re.parseAndEval("train_control <- trainControl(method='cv', number=10)",env,false);
+		re.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(");

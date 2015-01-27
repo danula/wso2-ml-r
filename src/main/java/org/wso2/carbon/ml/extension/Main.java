@@ -16,8 +16,6 @@ public class Main {
         try {
             rex = new RExtension();
             rex.evaluate("src/test/resources/workflow-3.json");
-        } catch (REngineException e) {
-            e.printStackTrace();
         } catch (FormattingException e) {
             e.printStackTrace();
         } catch (EvaluationException e) {
