@@ -1,0 +1,57 @@
+{ "algorithmClass" : "Classification",
+  "algorithmName" : "LINEAR_REGRESSION",
+  "datasetURL" : "src/test/resources/dataset-5.csv",
+  "features" : [ { "imputeOption" : "DISCARD",
+    "include" : true,
+    "index" : 0,
+    "name" : "mpg",
+    "type" : "NUMERICAL"
+  },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "cylinders",
+      "type" : "CATEGORICAL"
+    },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "displacement",
+      "type" : "NUMERICAL"
+    },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "horsepower",
+      "type" : "NUMERICAL"
+    },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "weight",
+      "type" : "NUMERICAL"
+    },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "acceleration",
+      "type" : "NUMERICAL"
+    },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "modelyear",
+      "type" : "CATEGORICAL"
+    },
+    { "imputeOption" : "DISCARD",
+      "include" : true,
+      "index" : 0,
+      "name" : "origin",
+      "type" : "CATEGORICAL"
+    }
+  ],
+  "hyperParameters" : { },
+  "responseVariable" : "mpg",
+  "trainDataFraction" : 0.69999999999999996,
+  "workflowID" : "b9e108cb-0335-43b9-83ca-3cf1b207543e"
+}
