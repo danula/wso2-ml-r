@@ -142,6 +142,7 @@ public class RExtension {
 					}
 				}
 				bestTune = trainModel(mlWorkflow, env, formula);
+				exportTrainedModel(mlWorkflow, formula, bestTune, env, exportPath);
 			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
 				formula.append("x = input$");
 				formula.append(mlWorkflow.getResponseVariable());
@@ -155,11 +156,8 @@ public class RExtension {
 						impute(feature, env);
 					}
 				}
-
+				clusterData(mlWorkflow, env, formula, exportPath);
 			}
-
-			exportModel(mlWorkflow, formula, bestTune, env, exportPath);
-
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
 			throw new EvaluationException("Operation requested cannot be executed in R", e);
@@ -366,7 +364,7 @@ public class RExtension {
 	}
 
 	private boolean appendParameters(Map<String, String> hyperParameters,REXP env) throws REXPMismatchException, REngineException {
-		StringBuffer script = new StringBuffer();
+		StringBuilder script = new StringBuilder();
 		boolean first = true;
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
 			if(first){
@@ -380,8 +378,7 @@ public class RExtension {
 			script.append(entry.getValue());
 		}
 		if(!first) script.append(")");
-		re.parseAndEval(script.toString(),env,false);
-		System.out.println(script.toString());
+		re.parseAndEval(script.toString(), env, false);
 		return !first;
 	}
 
@@ -410,12 +407,33 @@ public class RExtension {
 
 	}
 
-	private void exportModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
+	private void clusterData(MLWorkflow mlWorkflow, REXP env, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
+		StringBuilder clusterScript = new StringBuilder("model <- ");
+		clusterScript.append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("(").append(formula.toString());
+
+		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
+		for(Map.Entry<String, String> entry : hyperParameters.entrySet()){
+			clusterScript.append(",").append(entry.getKey()).append("=").append(entry.getValue());
+		}
+
+		clusterScript.append(")");
+		LOGGER.trace(clusterScript.toString());
+		re.parseAndEval(clusterScript.toString(), env, false);
+		LOGGER.trace("library('pmml')");
+		re.parseAndEval("library('pmml')", env, false);
+		LOGGER.trace("modelPmml <- pmml(model)");
+		re.parseAndEval("modelPmml <- pmml(model)", env, false);
+
+		LOGGER.trace("write(toString(modelpmml),file = '"+exportPath+"')");
+		re.parseAndEval("write(toString(modelPmml),file = '"+exportPath+"')", env, false);
+		LOGGER.debug("#Export Success - Path: " + exportPath);
+	}
+
+	private void exportTrainedModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
 
-		parameters.append(formula);
-		parameters.append(",data=input");
+		parameters.append(formula).append(",data=input");
 
 		String[] names = bestTune._attr().asList().at("names").asStrings();
 		RList values = bestTune.asList();
@@ -438,9 +456,7 @@ public class RExtension {
 				return;
 			case "LOGISTIC_REGRESSION":
 				LOGGER.trace("bestModel <- model$finalModel");
-				re.parseAndEval("bestModel <- model$finalModel",env,false);
-				LOGGER.trace("modelPmml <- pmml(bestModel)");
-				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				re.parseAndEval("modelPmml <- pmml(model$finalModel)",env,false);
 				break;
 			case "LINEAR_REGRESSION":
 				LOGGER.trace("bestModel <- glm("+formula.toString()+",data=input)");
@@ -455,6 +471,10 @@ public class RExtension {
 				re.parseAndEval("bestModel<- randomForest("+parameters.toString()+")");
 				LOGGER.trace("modelPmml <- pmml(bestModel)");
 				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				break;
+			case "DECESION_TREES":
+				break;
+			case "SVM":
 				break;
 
 		}
