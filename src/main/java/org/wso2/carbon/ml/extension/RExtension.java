@@ -425,7 +425,7 @@ public class RExtension {
 
 	private void exportModel(MLWorkflow mlWorkflow, StringBuffer fieldBuffer, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
 
-		StringBuffer parameters = new StringBuffer();
+		StringBuilder parameters = new StringBuilder();
 
 		parameters.append(fieldBuffer);
 		parameters.append(",data=input");
@@ -434,7 +434,7 @@ public class RExtension {
 		RList values = bestTune.asList();
 
 		for(int i = 0; i < names.length; ++i) {
-			parameters.append("," + names[i] + "=" + JSONConverter.getDataElement(values.at(i)));
+			parameters.append(",").append(names[i]).append("=").append(JSONConverter.getDataElement(values.at(i)));
 		}
 
 		switch(mlWorkflow.getAlgorithmName()){
@@ -449,20 +449,18 @@ public class RExtension {
 		LOGGER.trace("modelpmml <- pmml(bestModel)");
 		re.parseAndEval("modelpmml <- pmml(bestModel)", env, false);
 
-		StringBuffer locationBuffer = new StringBuffer(exportPath);
+		StringBuilder locationBuffer = new StringBuilder(exportPath);
 
-		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
-		buffer.append(locationBuffer);
+		StringBuilder builder = new StringBuilder("write(toString(modelpmml),file = '");
+		builder.append(locationBuffer).append("')");
 
-		buffer.append("')");
-
-		re.parseAndEval(buffer.toString(), env, false);
-		LOGGER.trace(buffer.toString());
+		re.parseAndEval(builder.toString(), env, false);
+		LOGGER.trace(builder.toString());
 		LOGGER.debug("#Export Success - Location: " + exportPath);
 	}
 
-	private void naiveBayes(MLWorkflow mlWorkflow, REXP env, StringBuffer parameters, String exportPath) throws REXPMismatchException, REngineException {
-		StringBuffer nbScript = new StringBuffer();
+	private void naiveBayes(MLWorkflow mlWorkflow, REXP env, StringBuilder parameters, String exportPath) throws REXPMismatchException, REngineException {
+		StringBuilder nbScript = new StringBuilder();
 
 		nbScript.append("bestModel<-");
 		nbScript.append("naiveBayes(");
@@ -477,10 +475,12 @@ public class RExtension {
 		LOGGER.trace("library('pmml')");
 		re.parseAndEval("library('pmml')");
 		LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
-		re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
 
-		StringBuffer buffer = new StringBuffer("write(toString(modelpmml),file = '");
-		buffer.append(exportPath);
-		buffer.append("')");
+		re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")",env,false);
+
+		StringBuilder builder = new StringBuilder("write(toString(modelpmml),file = '");
+		builder.append(exportPath).append("')");
+
+		re.parseAndEval(builder.toString(), env, false);
 	}
 }
