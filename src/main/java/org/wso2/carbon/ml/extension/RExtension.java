@@ -19,7 +19,7 @@ public class RExtension {
 
 	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
 	public static REngine re = null;
-	private StringBuffer script;
+	private StringBuilder script;
 
 	/**
 	 * Default constructor for {@link RExtension}. Creates a REngine instance.
@@ -47,7 +47,7 @@ public class RExtension {
 	/**
 	 * @return the script
 	 */
-	public StringBuffer getScript() {
+	public StringBuilder getScript() {
 		return script;
 	}
 
@@ -178,19 +178,15 @@ public class RExtension {
 		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
 		/*Should install klaR, MASS and is libraries: ADD to documentation*/
 
-		script = new StringBuffer();
+		script = new StringBuilder();
 
 		re.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
-		script.append("model <- train(");
+		script.append("model <- train(").append(tempBuffer).append(", method =");
 
-		script.append(tempBuffer);
+		script.append("'").append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("',data=input");
 
-		script.append(", method =");
-		script.append("'" + Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName()) + "'");
-
-		script.append(",data=input");
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
 		if(appendParameters(hyperParameters,env)){
@@ -208,9 +204,7 @@ public class RExtension {
 		REXP out = re.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
 		LOGGER.trace("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")");
 
-		REXP bestTune = re.parseAndEval("model$bestTune", env, true);
-
-		return bestTune;
+		return re.parseAndEval("model$bestTune", env, true);
 	}
 
 	private String[] getNames(REXP rexp){
@@ -416,13 +410,6 @@ public class RExtension {
 
 	}
 
-	private void exportToPMML(REXP env, String exportPath) throws REngineException,
-	                                                          REXPMismatchException {
-
-
-
-	}
-
 	private void exportModel(MLWorkflow mlWorkflow, StringBuffer fieldBuffer, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
@@ -441,31 +428,27 @@ public class RExtension {
 			case "NAIVE_BAYES":
 				naiveBayes(mlWorkflow, env, parameters, exportPath);
 				return;
+			case "LOGISTIC_REGRESSION":
+				LOGGER.trace("bestModel <- model$finalModel");
+				re.parseAndEval("bestModel <- model$finalModel",env,false);
+				break;
 		}
 
 		LOGGER.debug("#Exporting to PMML. Using library pmml");
 		LOGGER.trace("library(pmml)");
 		re.parseAndEval("library(pmml)", env, false);
 		LOGGER.trace("modelpmml <- pmml(bestModel)");
-		re.parseAndEval("modelpmml <- pmml(bestModel)", env, false);
+		re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 
-		StringBuilder locationBuffer = new StringBuilder(exportPath);
-
-		StringBuilder builder = new StringBuilder("write(toString(modelpmml),file = '");
-		builder.append(locationBuffer).append("')");
-
-		re.parseAndEval(builder.toString(), env, false);
-		LOGGER.trace(builder.toString());
+		LOGGER.trace("write(toString(modelpmml),file = '"+exportPath+"')");
+		re.parseAndEval("write(toString(modelPmml),file = '"+exportPath+"')", env, false);
 		LOGGER.debug("#Export Success - Location: " + exportPath);
 	}
 
 	private void naiveBayes(MLWorkflow mlWorkflow, REXP env, StringBuilder parameters, String exportPath) throws REXPMismatchException, REngineException {
 		StringBuilder nbScript = new StringBuilder();
 
-		nbScript.append("bestModel<-");
-		nbScript.append("naiveBayes(");
-		nbScript.append(parameters);
-		nbScript.append(")");
+		nbScript.append("bestModel<- naiveBayes(").append(parameters).append(")");
 
 		LOGGER.trace("library('e1071')");
 		re.parseAndEval("library('e1071')");
@@ -478,9 +461,6 @@ public class RExtension {
 
 		re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")",env,false);
 
-		StringBuilder builder = new StringBuilder("write(toString(modelpmml),file = '");
-		builder.append(exportPath).append("')");
-
-		re.parseAndEval(builder.toString(), env, false);
+		re.parseAndEval("write(toString(modelpmml),file = '" + exportPath + "')", env, false);
 	}
 }
