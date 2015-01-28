@@ -108,7 +108,7 @@ public class RExtension {
 	}
 
 	private void runScript(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
-		StringBuffer fieldBuffer = new StringBuffer();
+		StringBuilder formula = new StringBuilder();
 
 		try {
 			REXP env = re.newEnvironment(null, true);
@@ -121,8 +121,8 @@ public class RExtension {
 			List<MLFeature> features = mlWorkflow.getFeatures();
 
 			if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
-				fieldBuffer.append(mlWorkflow.getResponseVariable());
-				fieldBuffer.append(" ~ ");
+				formula.append(mlWorkflow.getResponseVariable());
+				formula.append(" ~ ");
 
 				boolean flag = false;
 
@@ -130,8 +130,8 @@ public class RExtension {
 					if (feature.isInclude()) {
 						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
 							if (flag)
-								fieldBuffer.append("+");
-							fieldBuffer.append(feature.getName());
+								formula.append("+");
+							formula.append(feature.getName());
 							flag = true;
 						}
 
@@ -141,10 +141,10 @@ public class RExtension {
 						impute(feature, env);
 					}
 				}
-				bestTune = trainModel(mlWorkflow, env, fieldBuffer);
+				bestTune = trainModel(mlWorkflow, env, formula);
 			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
-				fieldBuffer.append("x = input$");
-				fieldBuffer.append(mlWorkflow.getResponseVariable());
+				formula.append("x = input$");
+				formula.append(mlWorkflow.getResponseVariable());
 
 				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
@@ -158,7 +158,7 @@ public class RExtension {
 
 			}
 
-			exportModel(mlWorkflow, fieldBuffer, bestTune, env, exportPath);
+			exportModel(mlWorkflow, formula, bestTune, env, exportPath);
 
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
@@ -169,7 +169,7 @@ public class RExtension {
 		}
 	}
 
-	private REXP trainModel(MLWorkflow mlWorkflow, REXP env, StringBuffer tempBuffer) throws REngineException,
+	private REXP trainModel(MLWorkflow mlWorkflow, REXP env, StringBuilder formula) throws REngineException,
 	                                                                  REXPMismatchException {
 		re.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
@@ -183,7 +183,7 @@ public class RExtension {
 		re.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
-		script.append("model <- train(").append(tempBuffer).append(", method =");
+		script.append("model <- train(").append(formula).append(", method =");
 
 		script.append("'").append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("',data=input");
 
@@ -410,11 +410,11 @@ public class RExtension {
 
 	}
 
-	private void exportModel(MLWorkflow mlWorkflow, StringBuffer fieldBuffer, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
+	private void exportModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
 
-		parameters.append(fieldBuffer);
+		parameters.append(formula);
 		parameters.append(",data=input");
 
 		String[] names = bestTune._attr().asList().at("names").asStrings();
@@ -424,43 +424,43 @@ public class RExtension {
 			parameters.append(",").append(names[i]).append("=").append(JSONConverter.getDataElement(values.at(i)));
 		}
 
+		LOGGER.debug("#Exporting to PMML. Using library pmml");
+		LOGGER.trace("library('pmml')");
+		re.parseAndEval("library('pmml')");
 		switch(mlWorkflow.getAlgorithmName()){
 			case "NAIVE_BAYES":
-				naiveBayes(mlWorkflow, env, parameters, exportPath);
+				LOGGER.trace("library('e1071')");
+				re.parseAndEval("library('e1071')");
+				LOGGER.trace("bestModel<- naiveBayes("+parameters.toString()+")");
+				re.parseAndEval("bestModel<- naiveBayes("+parameters.toString()+")",env,false);
+				LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
+				re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")",env,false);
 				return;
 			case "LOGISTIC_REGRESSION":
 				LOGGER.trace("bestModel <- model$finalModel");
 				re.parseAndEval("bestModel <- model$finalModel",env,false);
+				LOGGER.trace("modelPmml <- pmml(bestModel)");
+				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 				break;
-		}
+			case "LINEAR_REGRESSION":
+				LOGGER.trace("bestModel <- glm("+formula.toString()+",data=input)");
+				re.parseAndEval("bestModel <- glm(" + formula.toString() + ",data=input)");
+				LOGGER.trace("modelPmml <- pmml(bestModel)");
+				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				break;
+			case "RANDOM_FOREST":
+				LOGGER.trace("library('randomForest')");
+				re.parseAndEval("library('randomForest')");
+				LOGGER.trace("bestModel<- randomForest("+parameters.toString()+")");
+				re.parseAndEval("bestModel<- randomForest("+parameters.toString()+")");
+				LOGGER.trace("modelPmml <- pmml(bestModel)");
+				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				break;
 
-		LOGGER.debug("#Exporting to PMML. Using library pmml");
-		LOGGER.trace("library(pmml)");
-		re.parseAndEval("library(pmml)", env, false);
-		LOGGER.trace("modelpmml <- pmml(bestModel)");
-		re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+		}
 
 		LOGGER.trace("write(toString(modelpmml),file = '"+exportPath+"')");
 		re.parseAndEval("write(toString(modelPmml),file = '"+exportPath+"')", env, false);
-		LOGGER.debug("#Export Success - Location: " + exportPath);
-	}
-
-	private void naiveBayes(MLWorkflow mlWorkflow, REXP env, StringBuilder parameters, String exportPath) throws REXPMismatchException, REngineException {
-		StringBuilder nbScript = new StringBuilder();
-
-		nbScript.append("bestModel<- naiveBayes(").append(parameters).append(")");
-
-		LOGGER.trace("library('e1071')");
-		re.parseAndEval("library('e1071')");
-		LOGGER.trace(nbScript.toString());
-		re.parseAndEval(nbScript.toString(),env,false);
-
-		LOGGER.trace("library('pmml')");
-		re.parseAndEval("library('pmml')");
-		LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
-
-		re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")",env,false);
-
-		re.parseAndEval("write(toString(modelpmml),file = '" + exportPath + "')", env, false);
+		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 }

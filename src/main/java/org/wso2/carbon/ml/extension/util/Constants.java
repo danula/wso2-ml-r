@@ -20,7 +20,7 @@ public class Constants {
     static{
         ALGORITHM_MAP.put("RANDOM_FOREST", "rf");
         ALGORITHM_MAP.put("LOGISTIC_REGRESSION", "multinom");
-        ALGORITHM_MAP.put("LINEAR_REGRESSION", "glm");
+        ALGORITHM_MAP.put("LINEAR_REGRESSION", "lm");
         ALGORITHM_MAP.put("SVM", "svmPoly");
         ALGORITHM_MAP.put("NAIVE_BAYES", "nb");
         ALGORITHM_MAP.put("DECISION_TREES", "rpart");
