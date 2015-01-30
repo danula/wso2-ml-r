@@ -49,9 +49,6 @@ public class JSONConverter {
             return "REXPList";
         }
         else if(e instanceof REXPInteger){
-            //return "REXPInt";
-            //System.out.println("REXPInt");
-
             if(e._attr()!=null) {
                 RList rl1 = e._attr().asList();
                 for(String key:rl1.keys()){
@@ -63,9 +60,6 @@ public class JSONConverter {
 
         }
         else if(e instanceof REXPDouble){
-//            return "REXPDouble";
-//            System.out.println("REXPDouble");
-
             if(e._attr()!=null) {
                 RList rl1 = e._attr().asList();
                 for(String key:rl1.keys()){

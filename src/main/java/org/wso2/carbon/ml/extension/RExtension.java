@@ -18,7 +18,8 @@ import java.util.Map;
 public class RExtension {
 
 	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
-	public static REngine re = null;
+	private static REngine rEngine = null;
+    private REXP env = null;
 	private StringBuilder script;
 
 	/**
@@ -29,19 +30,23 @@ public class RExtension {
 	public RExtension() throws InitializationException{
 		PropertyConfigurator.configure("log4j.properties");
 		try {
-			re = JRIEngine.createEngine();
+			rEngine = JRIEngine.createEngine();
+            env = rEngine.newEnvironment(null, true);
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
 			throw new InitializationException("Cannot create R Engine", e);
-		}
-	}
+		} catch (REXPMismatchException e) {
+            LOGGER.error(e.getMessage());
+            throw new InitializationException("Cannot create R Environment", e);
+        }
+    }
 
 	/**
 	 * Destroy the REngine
 	 */
 	public void destroy(){
-		if(RExtension.re != null)
-			RExtension.re.close();
+		if(RExtension.rEngine != null)
+			RExtension.rEngine.close();
 	}
 
 	/**
@@ -111,11 +116,10 @@ public class RExtension {
 		StringBuilder formula = new StringBuilder();
 
 		try {
-			REXP env = re.newEnvironment(null, true);
 			REXP bestTune = null;
 
 			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
-			re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
+			rEngine.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
 			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/"+mlWorkflow.getDatasetURL()+"')");
 
 			List<MLFeature> features = mlWorkflow.getFeatures();
@@ -136,13 +140,13 @@ public class RExtension {
 						}
 
 						if (feature.getType().equals("CATEGORICAL"))
-							defineCategoricalData(feature, env);
+							defineCategoricalData(feature);
 
-						impute(feature, env);
+						impute(feature);
 					}
 				}
-				bestTune = trainModel(mlWorkflow, env, formula);
-				exportTrainedModel(mlWorkflow, formula, bestTune, env, exportPath);
+				bestTune = trainModel(mlWorkflow, formula);
+				exportTrainedModel(mlWorkflow, formula, bestTune, exportPath);
 			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
 				formula.append("x = input$");
 				formula.append(mlWorkflow.getResponseVariable());
@@ -151,12 +155,12 @@ public class RExtension {
 					if (feature.isInclude()) {
 
 						if (feature.getType().equals("CATEGORICAL"))
-							defineCategoricalData(feature, env);
+							defineCategoricalData(feature);
 
-						impute(feature, env);
+						impute(feature);
 					}
 				}
-				clusterData(mlWorkflow, env, formula, exportPath);
+				clusterData(mlWorkflow, formula, exportPath);
 			}
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
@@ -167,18 +171,18 @@ public class RExtension {
 		}
 	}
 
-	private REXP trainModel(MLWorkflow mlWorkflow, REXP env, StringBuilder formula) throws REngineException,
+	private REXP trainModel(MLWorkflow mlWorkflow, StringBuilder formula) throws REngineException,
 	                                                                  REXPMismatchException {
-		re.parseAndEval("library('caret')");
+		rEngine.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 
 
-		re.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
+		rEngine.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
 		/*Should install klaR, MASS and is libraries: ADD to documentation*/
 
 		script = new StringBuilder();
 
-		re.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
+		rEngine.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(").append(formula).append(", method =");
@@ -187,7 +191,7 @@ public class RExtension {
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
-		if(appendParameters(hyperParameters,env)){
+		if(appendParameters(hyperParameters)){
 			script.append(",tuneGrid=tuneGrid");
 		}
 		script.append(",trControl=train_control)");
@@ -195,61 +199,61 @@ public class RExtension {
 
 
 		// evaluating the R script
-		re.parseAndEval(script.toString(), env, false);
-		re.parseAndEval("prediction<-predict(model,input[-match('" + mlWorkflow.getResponseVariable() + "',names(input))])", env, false);
+		rEngine.parseAndEval(script.toString(), env, false);
+		rEngine.parseAndEval("prediction<-predict(model,input[-match('" + mlWorkflow.getResponseVariable() + "',names(input))])", env, false);
 		LOGGER.trace("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])");
 
-		REXP out = re.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
-		LOGGER.trace("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")");
+		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
+		LOGGER.trace("confusionMatrix(prediction,input$" + mlWorkflow.getResponseVariable() + ")");
 
-		return re.parseAndEval("model$bestTune", env, true);
+		return rEngine.parseAndEval("model$bestTune", env, true);
 	}
 
-	private boolean appendParameters(Map<String, String> hyperParameters,REXP env) throws REXPMismatchException, REngineException {
-		StringBuilder script = new StringBuilder();
+	private boolean appendParameters(Map<String, String> hyperParameters) throws REXPMismatchException, REngineException {
+		StringBuilder tuneGrid = new StringBuilder();
 		boolean first = true;
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
 			if(first){
-				script.append("tuneGrid <-  expand.grid(");
+				tuneGrid.append("tuneGrid <-  expand.grid(");
 				first = false;
 			}else {
-				script.append(",");
+				tuneGrid.append(",");
 			}
-			script.append(entry.getKey());
-			script.append("=");
-			script.append(entry.getValue());
+			tuneGrid.append(entry.getKey());
+			tuneGrid.append("=");
+			tuneGrid.append(entry.getValue());
 		}
-		if(!first) script.append(")");
-		re.parseAndEval(script.toString(), env, false);
+		if(!first) tuneGrid.append(")");
+		rEngine.parseAndEval(tuneGrid.toString(), env, false);
 		return !first;
 	}
 
-	private void impute(MLFeature feature, REXP env) throws REngineException, REXPMismatchException {
+	private void impute(MLFeature feature) throws REngineException, REXPMismatchException {
 		String name = feature.getName();
 		if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 
 			LOGGER.debug("#Impute - Replacing with mean " + name);
-			re.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
+			rEngine.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
 			LOGGER.trace("temp <- mean(input$" + name + ",na.rm=TRUE)");
-			re.parseAndEval("input$" + name + "[is.na(input$" + name + ")] <- temp", env, false);
+			rEngine.parseAndEval("input$" + name + "[is.na(input$" + name + ")] <- temp", env, false);
 			LOGGER.trace("input$" + name + "[is.na(input$" + name + ")] <- temp");
 		} else if (feature.getImputeOption().equals("DISCARD")) {
 			LOGGER.debug("#Impute - discard " + name);
-			re.parseAndEval("input <- input[complete.cases(input$" + name + "),]", env, false);
+			rEngine.parseAndEval("input <- input[complete.cases(input$" + name + "),]", env, false);
 			LOGGER.trace("input <- input[complete.cases(input$" + name + "),]");
 		}
 	}
 
-	private void defineCategoricalData(MLFeature feature, REXP env) throws REngineException,
+	private void defineCategoricalData(MLFeature feature) throws REngineException,
 	                                                               REXPMismatchException {
 		String name = feature.getName();
 		LOGGER.debug("#Define as categorical : " + name);
-		re.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
+		rEngine.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
 		LOGGER.trace("input$" + name + "<- factor(input$" + name + ")");
 
 	}
 
-	private void clusterData(MLWorkflow mlWorkflow, REXP env, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
+	private void clusterData(MLWorkflow mlWorkflow, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
 		StringBuilder clusterScript = new StringBuilder("model <- ");
 		clusterScript.append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("(").append(formula.toString());
 
@@ -260,18 +264,18 @@ public class RExtension {
 
 		clusterScript.append(")");
 		LOGGER.trace(clusterScript.toString());
-		re.parseAndEval(clusterScript.toString(), env, false);
+		rEngine.parseAndEval(clusterScript.toString(), env, false);
 		LOGGER.trace("library('pmml')");
-		re.parseAndEval("library('pmml')", env, false);
+		rEngine.parseAndEval("library('pmml')", env, false);
 		LOGGER.trace("modelPmml <- pmml(model)");
-		re.parseAndEval("modelPmml <- pmml(model)", env, false);
+		rEngine.parseAndEval("modelPmml <- pmml(model)", env, false);
 
 		LOGGER.trace("write(toString(modelpmml),file = '"+exportPath+"')");
-		re.parseAndEval("write(toString(modelPmml),file = '"+exportPath+"')", env, false);
+		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", env, false);
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 
-	private void exportTrainedModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, REXP env, String exportPath) throws REXPMismatchException, REngineException {
+	private void exportTrainedModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
 
@@ -286,51 +290,51 @@ public class RExtension {
 
 		LOGGER.debug("#Exporting to PMML. Using library pmml");
 		LOGGER.trace("library('pmml')");
-		re.parseAndEval("library('pmml')");
+		rEngine.parseAndEval("library('pmml')");
 		switch(mlWorkflow.getAlgorithmName()){
 			case "NAIVE_BAYES":
 				LOGGER.trace("library('e1071')");
-				re.parseAndEval("library('e1071')");
+				rEngine.parseAndEval("library('e1071')");
 				LOGGER.trace("bestModel<- naiveBayes("+parameters.toString()+")");
-				re.parseAndEval("bestModel<- naiveBayes("+parameters.toString()+")",env,false);
+				rEngine.parseAndEval("bestModel<- naiveBayes(" + parameters.toString() + ")", env, false);
 				LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
-				re.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")",env,false);
+				rEngine.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\"" + mlWorkflow.getResponseVariable() + "\")", env, false);
 				return;
 			case "LOGISTIC_REGRESSION":
 				LOGGER.trace("bestModel <- model$finalModel");
-				re.parseAndEval("modelPmml <- pmml(model$finalModel)",env,false);
+				rEngine.parseAndEval("modelPmml <- pmml(model$finalModel)", env, false);
 				break;
 			case "LINEAR_REGRESSION":
 				LOGGER.trace("bestModel <- lm("+formula.toString()+",data=input)");
-				re.parseAndEval("bestModel <- lm(" + formula.toString() + ",data=input)", env, false);
+				rEngine.parseAndEval("bestModel <- lm(" + formula.toString() + ",data=input)", env, false);
 				LOGGER.trace("modelPmml <- pmml(bestModel)");
-				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				rEngine.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 				break;
 			case "RANDOM_FOREST":
 				LOGGER.trace("library('randomForest')");
-				re.parseAndEval("library('randomForest')");
+				rEngine.parseAndEval("library('randomForest')");
 				LOGGER.trace("bestModel<- randomForest("+parameters.toString()+")");
-				re.parseAndEval("bestModel<- randomForest("+parameters.toString()+")");
+				rEngine.parseAndEval("bestModel<- randomForest(" + parameters.toString() + ")");
 				LOGGER.trace("modelPmml <- pmml(bestModel)");
-				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				rEngine.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 				break;
 			case "DECISION_TREES":
                 LOGGER.trace("bestModel <- model$finalModel");
-                re.parseAndEval("modelPmml <- pmml(model$finalModel)",env,false);
+                rEngine.parseAndEval("modelPmml <- pmml(model$finalModel)", env, false);
                 break;
 			case "SVM":
                 LOGGER.trace("library('e1071')");
-                re.parseAndEval("library('e1071')");
+                rEngine.parseAndEval("library('e1071')");
                 LOGGER.trace("bestModel<- svm("+parameters.toString()+")");
-                re.parseAndEval("bestModel<- svm("+parameters.toString()+")");
+                rEngine.parseAndEval("bestModel<- svm(" + parameters.toString() + ")");
                 LOGGER.trace("modelPmml <- pmml(bestModel)");
-                re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+                rEngine.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 				break;
 
 		}
 
 		LOGGER.trace("write(toString(modelPmml),file = '"+exportPath+"')");
-		re.parseAndEval("write(toString(modelPmml),file = '"+exportPath+"')", env, false);
+		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", env, false);
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 }
