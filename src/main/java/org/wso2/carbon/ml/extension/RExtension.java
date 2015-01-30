@@ -205,7 +205,6 @@ public class RExtension {
 
 		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", rEnvironment, true);
 		LOGGER.trace("confusionMatrix(prediction,input$" + mlWorkflow.getResponseVariable() + ")");
-
 		return rEngine.parseAndEval("model$bestTune", rEnvironment, true);
 	}
 
@@ -275,6 +274,19 @@ public class RExtension {
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 
+    public String getDataElement(REXP rexp){
+        if(rexp instanceof REXPInteger){
+            return Integer.toString(((REXPInteger) rexp).asIntegers()[0]);
+        }else if(rexp instanceof REXPDouble){
+            return Double.toString(((REXPDouble)rexp).asDoubles()[0]);
+        }else if(rexp instanceof REXPString){
+            return ((REXPString)rexp).asStrings()[0];
+        }else if(rexp instanceof REXPLogical){
+            return ((REXPLogical)rexp).asStrings()[0];
+        }
+        return null;
+    }
+
 	private void exportTrainedModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
@@ -285,7 +297,7 @@ public class RExtension {
 		RList values = bestTune.asList();
 
 		for(int i = 0; i < names.length; ++i) {
-			parameters.append(",").append(names[i]).append("=").append(JSONConverter.getDataElement(values.at(i)));
+			parameters.append(",").append(names[i]).append("=").append(getDataElement(values.at(i)));
 		}
 
 		LOGGER.debug("#Exporting to PMML. Using library pmml");

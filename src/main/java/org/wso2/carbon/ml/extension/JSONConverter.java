@@ -15,7 +15,6 @@ public class JSONConverter {
     }
 
     public static Object convertToJSON(REXP e) {
-        System.out.println(e.toDebugString());
         Map<String,Object> jo= new HashMap<>();
 
         if(e instanceof REXPNull){
@@ -26,21 +25,18 @@ public class JSONConverter {
             if(e instanceof REXPGenericVector) rl = ((REXPGenericVector)e).asList();
             else rl = ((REXPList)e).asList();
             for(int i=0;i<rl.size();i++){
-                //jo.put(rl.keyAt(i),"test");
                 jo.put(rl.keyAt(i), convertToJSON(rl.at(i)));
 
             }
 
         }
         else if(e instanceof REXPString){
-            //System.out.println("REXPString");
             String[] array = ((REXPString)e).asStrings();
 
             return array;
 
         }
         else if(e instanceof REXPSymbol){
-            //System.out.println("REXPString");
             String[] array = ((REXPSymbol)e).asStrings();
             return array;
 
@@ -73,18 +69,4 @@ public class JSONConverter {
         else return "Other";
         return jo;
     }
-
-    public static String getDataElement(REXP rexp){
-        if(rexp instanceof REXPInteger){
-            return Integer.toString(((REXPInteger) rexp).asIntegers()[0]);
-        }else if(rexp instanceof REXPDouble){
-            return Double.toString(((REXPDouble)rexp).asDoubles()[0]);
-        }else if(rexp instanceof REXPString){
-            return ((REXPString)rexp).asStrings()[0];
-        }else if(rexp instanceof REXPLogical){
-            return ((REXPLogical)rexp).asStrings()[0];
-        }
-        return null;
-    }
-
 }
