@@ -116,7 +116,7 @@ public class RExtension {
 
 			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
 			re.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
-			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/src/test/resources/dataset-5.csv')");
+			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/"+mlWorkflow.getDatasetURL()+"')");
 
 			List<MLFeature> features = mlWorkflow.getFeatures();
 
@@ -317,6 +317,12 @@ public class RExtension {
 			case "DECESION_TREES":
 				break;
 			case "SVM":
+                LOGGER.trace("library('e1071')");
+                re.parseAndEval("library('e1071')");
+                LOGGER.trace("bestModel<- svm("+parameters.toString()+")");
+                re.parseAndEval("bestModel<- svm("+parameters.toString()+")");
+                LOGGER.trace("modelPmml <- pmml(bestModel)");
+                re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 				break;
 
 		}
