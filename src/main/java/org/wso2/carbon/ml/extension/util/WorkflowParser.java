@@ -70,9 +70,13 @@ public class WorkflowParser {
             mlWorkflow.setFeatures(populateFeatures(features));
 
         // populating hyper parameters
-        JsonElement hyperParamElement = workflow.get("hyperParameters");
-        if (features != null)
-            mlWorkflow.setHyperParameters(populateHyperParameters(hyperParamElement));
+        JsonElement hyperParameters = workflow.get("hyperParameters");
+        if (hyperParameters != null)
+            mlWorkflow.setHyperParameters(populateParameters(hyperParameters));
+
+        JsonElement trainControls = workflow.get("trainControls");
+        if(trainControls != null)
+            mlWorkflow.setTrainControls(populateParameters(trainControls));
 
         return mlWorkflow;
     }
@@ -114,7 +118,7 @@ public class WorkflowParser {
      * @param jsonElement the JSON object extracted from the JSON file
      * @return Map with hyper parameters
      */
-    private Map<String, String> populateHyperParameters(JsonElement jsonElement) {
+    private Map<String, String> populateParameters(JsonElement jsonElement) {
 
         LOGGER.debug("Parsing Hyper Parameters");
         Map<String, String> map = new HashMap<String, String>();

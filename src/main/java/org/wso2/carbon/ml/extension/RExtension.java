@@ -188,14 +188,12 @@ public class RExtension {
 		rEngine.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 
-
-		rEngine.parseAndEval("train_control <- trainControl(method='repeatedcv', number=10, repeats=3)");
+        StringBuilder trainControl = appendControlParameters(mlWorkflow.getTrainControls());
+        LOGGER.trace(trainControl.toString());
+		rEngine.parseAndEval(trainControl.toString());
 		/*Should install klaR, MASS and is libraries: ADD to documentation*/
 
 		script = new StringBuilder();
-
-		rEngine.parseAndEval("train_control <- trainControl(method='cv', number=10)", rEnvironment, false);
-		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(").append(formula).append(", method =");
 
@@ -203,7 +201,7 @@ public class RExtension {
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
-		if(appendParameters(hyperParameters)){
+		if(appendHyperParameters(hyperParameters)){
 			script.append(",tuneGrid=tuneGrid");
 		}
 		script.append(",trControl=train_control)");
@@ -220,7 +218,28 @@ public class RExtension {
 		return rEngine.parseAndEval("model$bestTune", rEnvironment, true);
 	}
 
-	private boolean appendParameters(Map<String, String> hyperParameters) throws REXPMismatchException, REngineException {
+    private StringBuilder appendControlParameters(Map<String, String> trainControls){
+        StringBuilder trainControl = new StringBuilder("train_control <- trainControl(");
+        boolean first = true;
+        for(Map.Entry<String, String> entry : trainControls.entrySet()){
+            if(first)
+                first = false;
+            else
+                trainControl.append(", ");
+
+            if(entry.getKey().equals("method")){
+                trainControl.append(entry.getKey()).append("='").append(entry.getValue()).append("'");
+                continue;
+            }
+
+            trainControl.append(entry.getKey()).append("=").append(entry.getValue());
+        }
+        trainControl.append(")");
+
+        return  trainControl;
+    }
+
+	private boolean appendHyperParameters(Map<String, String> hyperParameters) throws REXPMismatchException, REngineException {
 		StringBuilder tuneGrid = new StringBuilder();
 		boolean first = true;
 		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
@@ -230,9 +249,7 @@ public class RExtension {
 			}else {
 				tuneGrid.append(",");
 			}
-			tuneGrid.append(entry.getKey());
-			tuneGrid.append("=");
-			tuneGrid.append(entry.getValue());
+			tuneGrid.append(entry.getKey()).append("=").append(entry.getValue());
 		}
 		if(!first) tuneGrid.append(")");
 		rEngine.parseAndEval(tuneGrid.toString(), rEnvironment, false);
