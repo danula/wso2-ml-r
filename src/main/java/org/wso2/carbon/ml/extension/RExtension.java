@@ -314,8 +314,10 @@ public class RExtension {
 				LOGGER.trace("modelPmml <- pmml(bestModel)");
 				re.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
 				break;
-			case "DECESION_TREES":
-				break;
+			case "DECISION_TREES":
+                LOGGER.trace("bestModel <- model$finalModel");
+                re.parseAndEval("modelPmml <- pmml(model$finalModel)",env,false);
+                break;
 			case "SVM":
                 LOGGER.trace("library('e1071')");
                 re.parseAndEval("library('e1071')");
@@ -327,7 +329,7 @@ public class RExtension {
 
 		}
 
-		LOGGER.trace("write(toString(modelpmml),file = '"+exportPath+"')");
+		LOGGER.trace("write(toString(modelPmml),file = '"+exportPath+"')");
 		re.parseAndEval("write(toString(modelPmml),file = '"+exportPath+"')", env, false);
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
