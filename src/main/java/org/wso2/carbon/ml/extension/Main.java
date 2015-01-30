@@ -15,7 +15,7 @@ public class Main {
         RExtension rex = null;
         try {
             rex = new RExtension();
-            rex.evaluate("src/test/resources/workflow-3.json");
+            rex.evaluate("src/test/resources/workflow-1.json");
         } catch (FormattingException e) {
             e.printStackTrace();
         } catch (EvaluationException e) {
@@ -26,8 +26,7 @@ public class Main {
             rex.destroy();
         }
         
-        long en = System.currentTimeMillis();
-        System.out.println(en-st);
+        LOGGER.info(System.currentTimeMillis() - st);
 
 
     }

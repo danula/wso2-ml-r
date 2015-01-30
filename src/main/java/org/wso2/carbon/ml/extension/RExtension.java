@@ -12,6 +12,7 @@ import org.wso2.carbon.ml.extension.model.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.Constants;
 import org.wso2.carbon.ml.extension.util.WorkflowParser;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,6 @@ public class RExtension {
 	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
 	private static REngine rEngine = null;
     private REXP rEnvironment = null;
-	private StringBuilder script;
 
 	/**
 	 * Default constructor for {@link RExtension}. Creates a REngine instance
@@ -50,20 +50,13 @@ public class RExtension {
 	}
 
 	/**
-	 * @return the script
-	 */
-	public StringBuilder getScript() {
-		return script;
-	}
-
-	/**
 	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location.
 	 * 
 	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow} bean
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
-		runScript(mlWorkflow, Constants.DEFAULT_EXPORT_PATH);
+		runScript(mlWorkflow, Constants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
@@ -77,7 +70,7 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(String workflowURL) throws FormattingException, InitializationException, EvaluationException {
-		evaluate(workflowURL, Constants.DEFAULT_EXPORT_PATH);
+		evaluate(workflowURL, Constants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
@@ -193,7 +186,7 @@ public class RExtension {
 		rEngine.parseAndEval(trainControl.toString());
 		/*Should install klaR, MASS and is libraries: ADD to documentation*/
 
-		script = new StringBuilder();
+		StringBuilder script = new StringBuilder();
 
 		script.append("model <- train(").append(formula).append(", method =");
 
@@ -393,11 +386,10 @@ public class RExtension {
                 LOGGER.trace("modelPmml <- pmml(bestModel)");
                 rEngine.parseAndEval("modelPmml <- pmml(bestModel)", rEnvironment, false);
 				break;
-
 		}
 
 		LOGGER.trace("write(toString(modelPmml),file = '"+exportPath+"')");
-		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", rEnvironment, false);
+		rEngine.parseAndEval("write(toString(modelPmml),file = '" + Paths.get(exportPath).toString() + "')", rEnvironment, false);
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 }

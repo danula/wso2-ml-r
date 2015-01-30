@@ -1,5 +1,7 @@
 package org.wso2.carbon.ml.extension.util;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +10,7 @@ public class Constants {
     /**
      * Default export path of the PMML model
      */
-    public static final String DEFAULT_EXPORT_PATH = "/home/"+System.getProperty("user.name")+"/model.pmml";
+    public static final Path DEFAULT_EXPORT_PATH = Paths.get("/home/"+System.getProperty("user.name")+"/model.pmml");
     /**
      * Maps the algorithm names with R function names
      */
