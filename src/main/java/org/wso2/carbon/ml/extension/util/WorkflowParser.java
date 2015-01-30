@@ -1,10 +1,7 @@
 package org.wso2.carbon.ml.extension.util;
 
+import com.google.gson.*;
 import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.model.MLFeature;
@@ -12,7 +9,6 @@ import org.wso2.carbon.ml.extension.model.MLWorkflow;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 
 public class WorkflowParser {
@@ -30,65 +26,53 @@ public class WorkflowParser {
     public MLWorkflow parseWorkflow(String fileURL) throws InitializationException, FormattingException {
 
         LOGGER.debug("Parsing Workflow");
-        JSONParser parser = new JSONParser();
-        JSONObject workflow = null;
-
+        JsonParser parser = new JsonParser();
+        JsonElement jsonElement = null;
         FileReader fr = null;
+
         try {
             fr = new FileReader(fileURL);
+            jsonElement = parser.parse(fr);
         } catch (FileNotFoundException e) {
             LOGGER.error(e.getMessage());
             throw new InitializationException("Workflow JSON file does not exist", e);
         }
 
-        Object obj = null;
-        try {
-            obj = parser.parse(fr);
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            throw new InitializationException("Workflow JSON file cannot be read", e);
-        } catch (ParseException e) {
-            LOGGER.error(e.getMessage());
-            throw new FormattingException("Formatting error in " + fileURL, e);
+        if (jsonElement != null) {
+            return populateWorkflowBean(jsonElement);
         }
 
-        workflow = (JSONObject) obj;
-
-        if (workflow != null) {
-            return populateWorkflowBean(workflow);
-        }
-
-        LOGGER.error("Parse Error : workflow is null");
+        LOGGER.error("Parse Error : jsonElement is null");
         return null;
     }
 
     /**
      * Populate the MLWorkflow Bean
      *
-     * @param workflow the parsed JSON object
+     * @param jsonElement the parsed JSON object
      * @return MLWorkflow Bean
      */
-    private MLWorkflow populateWorkflowBean(JSONObject workflow) {
+    private MLWorkflow populateWorkflowBean(JsonElement jsonElement) {
 
         MLWorkflow mlWorkflow = new MLWorkflow();
-
+        JsonObject workflow = jsonElement.getAsJsonObject();
         // populating MLWorkfolw data
-        mlWorkflow.setAlgorithmClass((String) workflow.get("algorithmClass"));
-        mlWorkflow.setAlgorithmName((String) workflow.get("algorithmName"));
-        mlWorkflow.setDatasetURL((String) workflow.get("datasetURL"));
-        mlWorkflow.setResponseVariable((String) workflow.get("responseVariable"));
-        mlWorkflow.setTrainDataFraction((Double) workflow.get("trainDataFraction"));
-        mlWorkflow.setWorkflowID((String) workflow.get("workflowID"));
+        mlWorkflow.setAlgorithmClass(workflow.getAsJsonObject().get("algorithmClass").getAsString());
+        mlWorkflow.setAlgorithmName(workflow.get("algorithmName").getAsString());
+        mlWorkflow.setDatasetURL(workflow.get("datasetURL").getAsString());
+        mlWorkflow.setResponseVariable(workflow.get("responseVariable").getAsString());
+        mlWorkflow.setTrainDataFraction(workflow.get("trainDataFraction").getAsDouble());
+        mlWorkflow.setWorkflowID(workflow.get("workflowID").getAsString());
 
         // populating features
-        JSONArray features = (JSONArray) workflow.get("features");
+        JsonArray features = workflow.get("features").getAsJsonArray();
         if (features != null)
             mlWorkflow.setFeatures(populateFeatures(features));
 
         // populating hyper parameters
-        JSONObject hyperParamObj = (JSONObject) workflow.get("hyperParameters");
+        JsonElement hyperParamElement = workflow.get("hyperParameters");
         if (features != null)
-            mlWorkflow.setHyperParameters(populateHyperParameters(hyperParamObj));
+            mlWorkflow.setHyperParameters(populateHyperParameters(hyperParamElement));
 
         return mlWorkflow;
     }
@@ -99,26 +83,26 @@ public class WorkflowParser {
      * @param features the JSON array extracted from the JSON file
      * @return list of features
      */
-    private List<MLFeature> populateFeatures(JSONArray features) {
+    private List<MLFeature> populateFeatures(JsonArray features) {
 
         LOGGER.debug("Parsing Features");
         List<MLFeature> featuresList = new ArrayList<MLFeature>();
         @SuppressWarnings("unchecked")
-        Iterator<JSONObject> iterator = features.iterator();
+        Iterator<JsonElement> iterator = features.iterator();
         MLFeature feature = null;
 
         while (iterator.hasNext()) {
             feature = new MLFeature();
 
-            JSONObject featureObj = (JSONObject) iterator.next();
+            JsonObject featureElement = iterator.next().getAsJsonObject();
 
-            Long index = (Long) featureObj.get("index");
+            Long index = featureElement.get("index").getAsLong();
 
             feature.setIndex(index.intValue());
-            feature.setImputeOption((String) featureObj.get("imputeOption"));
-            feature.setName((String) featureObj.get("name"));
-            feature.setType((String) featureObj.get("type"));
-            feature.setInclude((Boolean) featureObj.get("include"));
+            feature.setImputeOption(featureElement.get("imputeOption").getAsString());
+            feature.setName(featureElement.get("name").getAsString());
+            feature.setType(featureElement.get("type").getAsString());
+            feature.setInclude(featureElement.get("include").getAsBoolean());
 
             featuresList.add(feature);
         }
@@ -127,20 +111,21 @@ public class WorkflowParser {
     }
 
     /**
-     * @param object the JSON object extracted from the JSON file
+     * @param jsonElement the JSON object extracted from the JSON file
      * @return Map with hyper parameters
      */
-    private Map<String, String> populateHyperParameters(JSONObject object) {
+    private Map<String, String> populateHyperParameters(JsonElement jsonElement) {
 
         LOGGER.debug("Parsing Hyper Parameters");
         Map<String, String> map = new HashMap<String, String>();
+        JsonObject hyperParams = jsonElement.getAsJsonObject();
 
         @SuppressWarnings("unchecked")
-        Set<String> keys = object.keySet();
+        Set<Map.Entry<String, JsonElement>> keys = hyperParams.entrySet();
 
-        for (String key : keys) {
-            String value = (String) object.get(key);
-            map.put(key, value);
+        for (Map.Entry key : keys) {
+            String value = jsonElement.getAsJsonObject().get(key.getKey().toString()).getAsString();
+            map.put(key.getKey().toString(), value);
         }
         return map;
     }
