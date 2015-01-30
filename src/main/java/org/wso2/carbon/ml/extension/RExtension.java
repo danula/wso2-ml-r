@@ -23,8 +23,8 @@ public class RExtension {
 	private StringBuilder script;
 
 	/**
-	 * Default constructor for {@link RExtension}. Creates a REngine instance.
-	 * 
+	 * Default constructor for {@link RExtension}. Creates a REngine instance
+	 * and a R Environment.
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 */
 	public RExtension() throws InitializationException{
@@ -59,8 +59,7 @@ public class RExtension {
 	/**
 	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location.
 	 * 
-	 * @param mlWorkflow
-	 *            MLWorkflow bean
+	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow} bean
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
@@ -102,16 +101,21 @@ public class RExtension {
 	/**
 	 * Evaluates {@link MLWorkflow}
 	 *
-	 * @param mlWorkflow
-	 *            MLWorkflow bean
+	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow} bean
 	 * @param exportPath
-	 *            absolute path to the exported PMML file
+	 *            absolute path to export PMML
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
 		runScript(mlWorkflow, exportPath);
 	}
 
+    /**]
+     * Manages script generation process.
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param exportPath absolute path to export PMML
+     * @throws EvaluationException
+     */
 	private void runScript(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
 		StringBuilder formula = new StringBuilder();
 
@@ -171,7 +175,15 @@ public class RExtension {
 		}
 	}
 
-	private REXP trainModel(MLWorkflow mlWorkflow, StringBuilder formula) throws REngineException,
+    /**
+     * Trains the model and choose optimized parameters.
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param formula formula of the model
+     * @return the {@link org.rosuda.REngine.REXP} that contains the best parameters
+     * @throws REngineException
+     * @throws REXPMismatchException
+     */
+    private REXP trainModel(MLWorkflow mlWorkflow, StringBuilder formula) throws REngineException,
 	                                                                  REXPMismatchException {
 		rEngine.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
@@ -252,7 +264,15 @@ public class RExtension {
 
 	}
 
-	private void clusterData(MLWorkflow mlWorkflow, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
+    /**
+     * Generates cluster model using kmeans algorithm
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param formula formula of the model
+     * @param exportPath absolute path to export
+     * @throws REXPMismatchException
+     * @throws REngineException
+     */
+    private void clusterData(MLWorkflow mlWorkflow, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
 		StringBuilder clusterScript = new StringBuilder("model <- ");
 		clusterScript.append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("(").append(formula.toString());
 
@@ -274,6 +294,11 @@ public class RExtension {
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 
+    /**
+     * Returns an element of a R generated object. {@link org.rosuda.REngine.REXP}
+     * @param rexp {@link org.rosuda.REngine.REXP}
+     * @return data element
+     */
     public String getDataElement(REXP rexp){
         if(rexp instanceof REXPInteger){
             return Integer.toString(((REXPInteger) rexp).asIntegers()[0]);
@@ -287,6 +312,15 @@ public class RExtension {
         return null;
     }
 
+    /**
+     * Exports the trained model to PMML
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param formula formula of the model
+     * @param bestTune tuned parameters
+     * @param exportPath absolute path to export
+     * @throws REXPMismatchException
+     * @throws REngineException
+     */
 	private void exportTrainedModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
