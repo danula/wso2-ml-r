@@ -19,7 +19,7 @@ public class RExtension {
 
 	private final static Logger LOGGER = Logger.getLogger(RExtension.class);
 	private static REngine rEngine = null;
-    private REXP env = null;
+    private REXP rEnvironment = null;
 	private StringBuilder script;
 
 	/**
@@ -31,7 +31,7 @@ public class RExtension {
 		PropertyConfigurator.configure("log4j.properties");
 		try {
 			rEngine = JRIEngine.createEngine();
-            env = rEngine.newEnvironment(null, true);
+            rEnvironment = rEngine.newEnvironment(null, true);
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
 			throw new InitializationException("Cannot create R Engine", e);
@@ -119,7 +119,7 @@ public class RExtension {
 			REXP bestTune = null;
 
 			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
-			rEngine.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", env, false);
+			rEngine.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", rEnvironment, false);
 			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/"+mlWorkflow.getDatasetURL()+"')");
 
 			List<MLFeature> features = mlWorkflow.getFeatures();
@@ -182,7 +182,7 @@ public class RExtension {
 
 		script = new StringBuilder();
 
-		rEngine.parseAndEval("train_control <- trainControl(method='cv', number=10)", env, false);
+		rEngine.parseAndEval("train_control <- trainControl(method='cv', number=10)", rEnvironment, false);
 		LOGGER.trace("train_control <- trainControl(method='cv', number=10)");
 
 		script.append("model <- train(").append(formula).append(", method =");
@@ -199,14 +199,14 @@ public class RExtension {
 
 
 		// evaluating the R script
-		rEngine.parseAndEval(script.toString(), env, false);
-		rEngine.parseAndEval("prediction<-predict(model,input[-match('" + mlWorkflow.getResponseVariable() + "',names(input))])", env, false);
+		rEngine.parseAndEval(script.toString(), rEnvironment, false);
+		rEngine.parseAndEval("prediction<-predict(model,input[-match('" + mlWorkflow.getResponseVariable() + "',names(input))])", rEnvironment, false);
 		LOGGER.trace("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])");
 
-		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", env, true);
+		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", rEnvironment, true);
 		LOGGER.trace("confusionMatrix(prediction,input$" + mlWorkflow.getResponseVariable() + ")");
 
-		return rEngine.parseAndEval("model$bestTune", env, true);
+		return rEngine.parseAndEval("model$bestTune", rEnvironment, true);
 	}
 
 	private boolean appendParameters(Map<String, String> hyperParameters) throws REXPMismatchException, REngineException {
@@ -224,7 +224,7 @@ public class RExtension {
 			tuneGrid.append(entry.getValue());
 		}
 		if(!first) tuneGrid.append(")");
-		rEngine.parseAndEval(tuneGrid.toString(), env, false);
+		rEngine.parseAndEval(tuneGrid.toString(), rEnvironment, false);
 		return !first;
 	}
 
@@ -233,13 +233,13 @@ public class RExtension {
 		if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
 
 			LOGGER.debug("#Impute - Replacing with mean " + name);
-			rEngine.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", env, false);
+			rEngine.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", rEnvironment, false);
 			LOGGER.trace("temp <- mean(input$" + name + ",na.rm=TRUE)");
-			rEngine.parseAndEval("input$" + name + "[is.na(input$" + name + ")] <- temp", env, false);
+			rEngine.parseAndEval("input$" + name + "[is.na(input$" + name + ")] <- temp", rEnvironment, false);
 			LOGGER.trace("input$" + name + "[is.na(input$" + name + ")] <- temp");
 		} else if (feature.getImputeOption().equals("DISCARD")) {
 			LOGGER.debug("#Impute - discard " + name);
-			rEngine.parseAndEval("input <- input[complete.cases(input$" + name + "),]", env, false);
+			rEngine.parseAndEval("input <- input[complete.cases(input$" + name + "),]", rEnvironment, false);
 			LOGGER.trace("input <- input[complete.cases(input$" + name + "),]");
 		}
 	}
@@ -248,7 +248,7 @@ public class RExtension {
 	                                                               REXPMismatchException {
 		String name = feature.getName();
 		LOGGER.debug("#Define as categorical : " + name);
-		rEngine.parseAndEval("input$" + name + "<- factor(input$" + name + ")", env, false);
+		rEngine.parseAndEval("input$" + name + "<- factor(input$" + name + ")", rEnvironment, false);
 		LOGGER.trace("input$" + name + "<- factor(input$" + name + ")");
 
 	}
@@ -264,14 +264,14 @@ public class RExtension {
 
 		clusterScript.append(")");
 		LOGGER.trace(clusterScript.toString());
-		rEngine.parseAndEval(clusterScript.toString(), env, false);
+		rEngine.parseAndEval(clusterScript.toString(), rEnvironment, false);
 		LOGGER.trace("library('pmml')");
-		rEngine.parseAndEval("library('pmml')", env, false);
+		rEngine.parseAndEval("library('pmml')", rEnvironment, false);
 		LOGGER.trace("modelPmml <- pmml(model)");
-		rEngine.parseAndEval("modelPmml <- pmml(model)", env, false);
+		rEngine.parseAndEval("modelPmml <- pmml(model)", rEnvironment, false);
 
 		LOGGER.trace("write(toString(modelpmml),file = '"+exportPath+"')");
-		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", env, false);
+		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", rEnvironment, false);
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 
@@ -296,19 +296,19 @@ public class RExtension {
 				LOGGER.trace("library('e1071')");
 				rEngine.parseAndEval("library('e1071')");
 				LOGGER.trace("bestModel<- naiveBayes("+parameters.toString()+")");
-				rEngine.parseAndEval("bestModel<- naiveBayes(" + parameters.toString() + ")", env, false);
+				rEngine.parseAndEval("bestModel<- naiveBayes(" + parameters.toString() + ")", rEnvironment, false);
 				LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
-				rEngine.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\"" + mlWorkflow.getResponseVariable() + "\")", env, false);
+				rEngine.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\"" + mlWorkflow.getResponseVariable() + "\")", rEnvironment, false);
 				return;
 			case "LOGISTIC_REGRESSION":
 				LOGGER.trace("bestModel <- model$finalModel");
-				rEngine.parseAndEval("modelPmml <- pmml(model$finalModel)", env, false);
+				rEngine.parseAndEval("modelPmml <- pmml(model$finalModel)", rEnvironment, false);
 				break;
 			case "LINEAR_REGRESSION":
 				LOGGER.trace("bestModel <- lm("+formula.toString()+",data=input)");
-				rEngine.parseAndEval("bestModel <- lm(" + formula.toString() + ",data=input)", env, false);
+				rEngine.parseAndEval("bestModel <- lm(" + formula.toString() + ",data=input)", rEnvironment, false);
 				LOGGER.trace("modelPmml <- pmml(bestModel)");
-				rEngine.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				rEngine.parseAndEval("modelPmml <- pmml(bestModel)", rEnvironment, false);
 				break;
 			case "RANDOM_FOREST":
 				LOGGER.trace("library('randomForest')");
@@ -316,11 +316,11 @@ public class RExtension {
 				LOGGER.trace("bestModel<- randomForest("+parameters.toString()+")");
 				rEngine.parseAndEval("bestModel<- randomForest(" + parameters.toString() + ")");
 				LOGGER.trace("modelPmml <- pmml(bestModel)");
-				rEngine.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+				rEngine.parseAndEval("modelPmml <- pmml(bestModel)", rEnvironment, false);
 				break;
 			case "DECISION_TREES":
                 LOGGER.trace("bestModel <- model$finalModel");
-                rEngine.parseAndEval("modelPmml <- pmml(model$finalModel)", env, false);
+                rEngine.parseAndEval("modelPmml <- pmml(model$finalModel)", rEnvironment, false);
                 break;
 			case "SVM":
                 LOGGER.trace("library('e1071')");
@@ -328,13 +328,13 @@ public class RExtension {
                 LOGGER.trace("bestModel<- svm("+parameters.toString()+")");
                 rEngine.parseAndEval("bestModel<- svm(" + parameters.toString() + ")");
                 LOGGER.trace("modelPmml <- pmml(bestModel)");
-                rEngine.parseAndEval("modelPmml <- pmml(bestModel)", env, false);
+                rEngine.parseAndEval("modelPmml <- pmml(bestModel)", rEnvironment, false);
 				break;
 
 		}
 
 		LOGGER.trace("write(toString(modelPmml),file = '"+exportPath+"')");
-		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", env, false);
+		rEngine.parseAndEval("write(toString(modelPmml),file = '" + exportPath + "')", rEnvironment, false);
 		LOGGER.debug("#Export Success - Path: " + exportPath);
 	}
 }
