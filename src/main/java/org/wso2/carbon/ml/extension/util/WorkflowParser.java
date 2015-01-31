@@ -36,6 +36,12 @@ public class WorkflowParser {
         } catch (FileNotFoundException e) {
             LOGGER.error(e.getMessage());
             throw new InitializationException("Workflow JSON file does not exist", e);
+        } catch (JsonSyntaxException e) {
+            LOGGER.error(e.getMessage());
+            throw new InitializationException("Workflow syntax error", e);
+        } catch (JsonParseException e){
+            LOGGER.error(e.getMessage());
+            throw new InitializationException("Workflow cannot be parsed", e);
         }
 
         if (jsonElement != null) {
