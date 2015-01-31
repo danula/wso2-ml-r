@@ -4,8 +4,8 @@ import com.google.gson.*;
 import org.apache.log4j.Logger;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
-import org.wso2.carbon.ml.extension.model.MLFeature;
-import org.wso2.carbon.ml.extension.model.MLWorkflow;
+import org.wso2.carbon.ml.extension.bean.MLFeature;
+import org.wso2.carbon.ml.extension.bean.MLWorkflow;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -19,7 +19,7 @@ public class WorkflowParser {
      * Parses Workflow JSON file
      *
      * @param fileURL the URL of the JSON file
-     * @return {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @return {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
      * @throws org.wso2.carbon.ml.extension.exception.InitializationException
      * @throws org.wso2.carbon.ml.extension.exception.FormattingException
      */

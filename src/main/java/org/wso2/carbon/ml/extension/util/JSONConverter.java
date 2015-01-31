@@ -1,4 +1,4 @@
-package org.wso2.carbon.ml.extension;
+package org.wso2.carbon.ml.extension.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

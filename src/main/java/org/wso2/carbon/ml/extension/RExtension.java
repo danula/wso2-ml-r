@@ -7,8 +7,8 @@ import org.rosuda.REngine.*;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
-import org.wso2.carbon.ml.extension.model.MLFeature;
-import org.wso2.carbon.ml.extension.model.MLWorkflow;
+import org.wso2.carbon.ml.extension.bean.MLFeature;
+import org.wso2.carbon.ml.extension.bean.MLWorkflow;
 import org.wso2.carbon.ml.extension.util.Constants;
 import org.wso2.carbon.ml.extension.util.WorkflowParser;
 
@@ -52,7 +52,7 @@ public class RExtension {
 	/**
 	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location.
 	 * 
-	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow} bean
+	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow} bean
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
@@ -94,7 +94,7 @@ public class RExtension {
 	/**
 	 * Evaluates {@link MLWorkflow}
 	 *
-	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow} bean
+	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow} bean
 	 * @param exportPath
 	 *            absolute path to export PMML
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
@@ -105,7 +105,7 @@ public class RExtension {
 
     /**]
      * Manages script generation process.
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
      * @param exportPath absolute path to export PMML
      * @throws EvaluationException
      */
@@ -170,7 +170,7 @@ public class RExtension {
 
     /**
      * Trains the model and choose optimized parameters.
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
      * @param formula formula of the model
      * @return the {@link org.rosuda.REngine.REXP} that contains the best parameters
      * @throws REngineException
@@ -276,7 +276,7 @@ public class RExtension {
 
     /**
      * Generates cluster model using kmeans algorithm
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
      * @param formula formula of the model
      * @param exportPath absolute path to export
      * @throws REXPMismatchException
@@ -324,7 +324,7 @@ public class RExtension {
 
     /**
      * Exports the trained model to PMML
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.model.MLWorkflow}
+     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
      * @param formula formula of the model
      * @param bestTune tuned parameters
      * @param exportPath absolute path to export

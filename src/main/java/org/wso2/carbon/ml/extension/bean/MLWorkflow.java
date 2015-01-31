@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.ml.extension.model;
+package org.wso2.carbon.ml.extension.bean;
 
 import java.io.Serializable;
 import java.util.List;
