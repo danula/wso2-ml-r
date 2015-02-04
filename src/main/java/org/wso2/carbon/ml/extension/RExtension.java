@@ -1,20 +1,28 @@
 package org.wso2.carbon.ml.extension;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.rosuda.REngine.JRI.JRIEngine;
-import org.rosuda.REngine.*;
-import org.wso2.carbon.ml.extension.exception.EvaluationException;
-import org.wso2.carbon.ml.extension.exception.FormattingException;
-import org.wso2.carbon.ml.extension.exception.InitializationException;
-import org.wso2.carbon.ml.extension.bean.MLFeature;
-import org.wso2.carbon.ml.extension.bean.MLWorkflow;
-import org.wso2.carbon.ml.extension.util.Constants;
-import org.wso2.carbon.ml.extension.util.WorkflowParser;
-
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPDouble;
+import org.rosuda.REngine.REXPInteger;
+import org.rosuda.REngine.REXPLogical;
+import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.REXPString;
+import org.rosuda.REngine.REngine;
+import org.rosuda.REngine.REngineException;
+import org.rosuda.REngine.RList;
+import org.rosuda.REngine.JRI.JRIEngine;
+import org.wso2.carbon.ml.extension.bean.MLFeature;
+import org.wso2.carbon.ml.extension.bean.MLWorkflow;
+import org.wso2.carbon.ml.extension.exception.EvaluationException;
+import org.wso2.carbon.ml.extension.exception.FormattingException;
+import org.wso2.carbon.ml.extension.exception.InitializationException;
+import org.wso2.carbon.ml.extension.util.Constants;
+import org.wso2.carbon.ml.extension.util.WorkflowParser;
 
 public class RExtension {
 

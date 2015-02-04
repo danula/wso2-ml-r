@@ -1,14 +1,15 @@
 package org.wso2.carbon.ml.extension;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.wso2.carbon.ml.extension.model.MLWorkflow;
+import org.wso2.carbon.ml.extension.bean.MLWorkflow;
+import org.wso2.carbon.ml.extension.exception.FormattingException;
+import org.wso2.carbon.ml.extension.exception.InitializationException;
+import org.wso2.carbon.ml.extension.util.WorkflowParser;
+
+import static org.junit.Assert.fail;
 
 public class RExtensionTestCase {
 	
@@ -22,50 +23,27 @@ public class RExtensionTestCase {
 	
 	@Before
 	public void setup(){
-//		try {
-//	        this.rex = new RExtension();
-//        } catch (REngineException e) {
-//	        fail("Unexpected Exception - REngineException");
-//        }
-//
-//		StringBuffer workflowLocation = new StringBuffer(RESOURCE_LOCATION);
-//
-//		InitializeWorkflow init = new InitializeWorkflow();
-//		try {
-//	        this.mlWorkflow = init.parseWorkflow(workflowLocation.append("workflow-3.json").toString());
-//        } catch (FileNotFoundException e) {
-//        	fail("Unexpected Exception - FileNotFoundException");
-//        } catch (IOException e) {
-//        	fail("Unexpected Exception - IOException");
-//        } catch (ParseException e) {
-//        	fail("Unexpected Exception - ParseException");
-//        }
-	}
+		try {
+	        this.rex = new RExtension();
+        } catch (InitializationException e) {
+            fail("Unexpected Exception: Cannot create R engine");
+        }
+
+        WorkflowParser parser = new WorkflowParser();
+        try {
+            this.mlWorkflow = parser.parseWorkflow(RESOURCE_LOCATION + "workflow-1.json");
+        } catch (InitializationException e) {
+            fail("Unexpected Exception: InitializationException");
+        } catch (FormattingException e) {
+            fail("Unexpected Exception: FormattingException");
+        }
+
+    }
 
 	@Test
 	public void testEvaluate1(){
-//		StringBuffer workflowLocation = new StringBuffer(RESOURCE_LOCATION);
-//
-//		try {
-//
-//	        rex.evaluate(workflowLocation.append("workflow-3.json").toString());
-//
-//	        File file = new File("model.pmml");
-//
-//	        assertNotNull(file);
-//
-//        } catch (FileNotFoundException e) {
-//        	fail("Unexpected Exception - FileNotFoundException");
-//        } catch (IOException e) {
-//        	fail("Unexpected Exception - IOException");
-//        } catch (ParseException e) {
-//        	fail("Unexpected Exception - ParseException");
-//        } catch (REngineException e) {
-//        	fail("Unexpected Exception - REngineException");
-//        } catch (REXPMismatchException e) {
-//        	fail("Unexpected Exception - REXPMismatchException");
-//        }
-	}
+
+    }
 	
 	@Test
 	public void testEvaluate2(){
