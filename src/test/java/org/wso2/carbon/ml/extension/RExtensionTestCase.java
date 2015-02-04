@@ -5,10 +5,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.wso2.carbon.ml.extension.bean.MLWorkflow;
+import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
+import org.wso2.carbon.ml.extension.util.Constants;
 import org.wso2.carbon.ml.extension.util.WorkflowParser;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class RExtensionTestCase {
@@ -24,17 +32,12 @@ public class RExtensionTestCase {
 	@Before
 	public void setup(){
 		try {
+            WorkflowParser parser = new WorkflowParser();
 	        this.rex = new RExtension();
-        } catch (InitializationException e) {
-            fail("Unexpected Exception: Cannot create R engine");
-        }
-
-        WorkflowParser parser = new WorkflowParser();
-        try {
             this.mlWorkflow = parser.parseWorkflow(RESOURCE_LOCATION + "workflow-1.json");
         } catch (InitializationException e) {
-            fail("Unexpected Exception: InitializationException");
-        } catch (FormattingException e) {
+            fail("Unexpected Exception: Cannot create R engine");
+        }  catch (FormattingException e) {
             fail("Unexpected Exception: FormattingException");
         }
 
@@ -42,70 +45,64 @@ public class RExtensionTestCase {
 
 	@Test
 	public void testEvaluate1(){
+        try {
+            rex.evaluate(RESOURCE_LOCATION + "workflow-1.json", "src/test/resources/Temp/model1-1.pmml");
+            FileInputStream fr = new FileInputStream("src/test/resources/Temp/model1-1.pmml");
+            //pmml should be exported in the given location
+            assertNotNull(fr);
 
+            rex.evaluate(mlWorkflow, "src/test/resources/Temp/model1-2.pmml");
+            fr = new FileInputStream("src/test/resources/Temp/model1-2.pmml");
+            //pmml should be exported in the given location
+            assertNotNull(fr);
+        } catch (FormattingException e) {
+            fail("Unexpected Exception: FormattingException");
+        } catch (InitializationException e) {
+            fail("Unexpected Exception: InitializationException");
+        } catch (EvaluationException e) {
+            fail("Unexpected Exception: EvaluationException");
+        } catch (FileNotFoundException e) {
+            fail("Unexpected Exception: FileNotFoundException");
+        }
     }
 	
 	@Test
 	public void testEvaluate2(){
-//
-//		try {
-//	        rex.evaluate(mlWorkflow);
-//
-//	        File file = new File("model.pmml");
-//
-//	        assertNotNull(file);
-//
-//        } catch (REngineException e) {
-//        	fail("Unexpected Exception - REngineException");
-//        } catch (REXPMismatchException e) {
-//        	fail("Unexpected Exception - REXPMismatchException");
-//        }
-	}
-	
-	
-	@Test
-	public void testSVM(){
-//
-//		String svmScript = "model <- svm(UNS ~ STG+SCG+STR+LPR+PEG,data=input,probability=TRUE,type='C',kernel='linear')";
-//
-//		try {
-//	        rex.evaluate("src/test/resources/workflow-2.json");
-//	        assertEquals(svmScript,rex.getScript().toString());
-//        } catch (IOException | ParseException | REngineException | REXPMismatchException e) {
-//	        fail("Unexpected Exception");
-//        }
-	}
-	
-	@Test
-	public void testLogisticRegression(){
-//
-//		String logRegScript = "model <- glm(Class ~ Age+BMI+DBP+DPF+NumPregnancies+PG2+SI2+TSFT,data=input,family=binomial)";
-//
-//		try {
-//	        rex.evaluate("src/test/resources/workflow-3.json");
-//	        assertEquals(logRegScript,rex.getScript().toString());
-//        } catch (IOException | ParseException | REngineException | REXPMismatchException e) {
-//	        fail("Unexpected Exception");
-//        }
-	}
-	
-	
+        try {
+            rex.evaluate(RESOURCE_LOCATION+"workflow-3.json");
+            FileInputStream fr = new FileInputStream(Constants.DEFAULT_EXPORT_PATH.toString());
+            //pmml should be exported in the default location
+            assertNotNull(fr);
+
+            rex.evaluate(mlWorkflow);
+            fr = new FileInputStream(Constants.DEFAULT_EXPORT_PATH.toString());
+            //pmml should be exported in the default location
+            assertNotNull(fr);
+        } catch (FormattingException e) {
+            fail("Unexpected Exception: FormattingException");
+        } catch (InitializationException e) {
+            fail("Unexpected Exception: InitializationException");
+        } catch (EvaluationException e) {
+            fail("Unexpected Exception: EvaluationException");
+        } catch (FileNotFoundException e) {
+            fail("Unexpected Exception: FileNotFoundException");
+        }
+
+    }
+
 	@After
 	public void cleanup(){
-//		File file = new File("model.pmml");
-//
-//		if(file != null)
-//			file.delete();
-//
-//		file = new File("src/test/resources/test3.pmml");
-//
-//		if(file != null)
-//			file.delete();
-//
-//		file = new File("src/test/resources/test4.pmml");
-//
-//		if(file != null)
-//			file.delete();
+
+        boolean b;
+		File file = new File("src/test/resources/Temp/model1-1.pmml");
+        b = file.delete();
+
+		file = new File("src/test/resources/Temp/model1-2.pmml");
+        b = file.delete();
+
+		file = new File(Constants.DEFAULT_EXPORT_PATH.toString());
+        b = file.delete();
+
 	}
 	
 

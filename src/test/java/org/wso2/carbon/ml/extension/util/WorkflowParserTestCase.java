@@ -64,16 +64,4 @@ public class WorkflowParserTestCase {
         assertEquals("repeatedcv",trainControls.get("method"));
 
 	}
-
-	/*Testing Exceptions*/
-	@Test(expected = InitializationException.class)
-	public void testParseWorkflowexception1() throws FormattingException, InitializationException {
-		init.parseWorkflow("test.json");
-	}
-
-	@Test(expected = FormattingException.class)
-	public void testParseWorkflowexception2() throws FormattingException, InitializationException {
-		init.parseWorkflow("src/test/resources/empty.json");
-	}
-
 }
