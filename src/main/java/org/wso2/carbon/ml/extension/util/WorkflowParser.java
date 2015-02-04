@@ -81,8 +81,11 @@ public class WorkflowParser {
             mlWorkflow.setHyperParameters(populateParameters(hyperParameters));
 
         JsonElement trainControls = workflow.get("trainControls");
-        if(trainControls != null)
+        if(trainControls != null) {
             mlWorkflow.setTrainControls(populateParameters(trainControls));
+        } else {
+            mlWorkflow.setTrainControls(Constants.DEFAULT_TRAIN_CONTROLS);
+        }
 
         return mlWorkflow;
     }
@@ -126,12 +129,11 @@ public class WorkflowParser {
      */
     private Map<String, String> populateParameters(JsonElement jsonElement) {
 
-        LOGGER.debug("Parsing Hyper Parameters");
         Map<String, String> map = new HashMap<String, String>();
-        JsonObject hyperParams = jsonElement.getAsJsonObject();
+        JsonObject parameters = jsonElement.getAsJsonObject();
 
         @SuppressWarnings("unchecked")
-        Set<Map.Entry<String, JsonElement>> keys = hyperParams.entrySet();
+        Set<Map.Entry<String, JsonElement>> keys = parameters.entrySet();
 
         for (Map.Entry key : keys) {
             String value = jsonElement.getAsJsonObject().get(key.getKey().toString()).getAsString();

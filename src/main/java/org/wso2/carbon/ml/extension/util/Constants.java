@@ -11,13 +11,19 @@ public class Constants {
      * Default export path of the PMML model
      */
     public static final Path DEFAULT_EXPORT_PATH = Paths.get("/home/"+System.getProperty("user.name")+"/model.pmml");
+
     /**
      * Maps the algorithm names with R function names
      */
     public static final Map<String, String> ALGORITHM_MAP = new HashMap<>();
 
     /**
-     * ALGORITHM_MAP initializer
+     * Default train controls
+     */
+    public static final Map<String, String> DEFAULT_TRAIN_CONTROLS = new HashMap<>();
+
+    /**
+     * Initializer
      */
     static{
         ALGORITHM_MAP.put("RANDOM_FOREST", "rf");
@@ -27,5 +33,9 @@ public class Constants {
         ALGORITHM_MAP.put("NAIVE_BAYES", "nb");
         ALGORITHM_MAP.put("DECISION_TREES", "rpart");
         ALGORITHM_MAP.put("KMEANS", "kmeans");
+
+        DEFAULT_TRAIN_CONTROLS.put("method","repeatedcv");
+        DEFAULT_TRAIN_CONTROLS.put("number", "10");
+        DEFAULT_TRAIN_CONTROLS.put("repeats", "4");
     }
 }
