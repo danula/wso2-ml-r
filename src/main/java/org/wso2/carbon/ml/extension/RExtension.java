@@ -6,15 +6,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.rosuda.REngine.REXP;
-import org.rosuda.REngine.REXPDouble;
-import org.rosuda.REngine.REXPInteger;
-import org.rosuda.REngine.REXPLogical;
-import org.rosuda.REngine.REXPMismatchException;
-import org.rosuda.REngine.REXPString;
-import org.rosuda.REngine.REngine;
-import org.rosuda.REngine.REngineException;
-import org.rosuda.REngine.RList;
+import org.rosuda.REngine.*;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.wso2.carbon.ml.extension.bean.MLFeature;
 import org.wso2.carbon.ml.extension.bean.MLWorkflow;
@@ -38,6 +30,7 @@ public class RExtension {
 	public RExtension() throws InitializationException{
 		PropertyConfigurator.configure("log4j.properties");
 		try {
+            LOGGER.info("Initializing R Engine");
 			rEngine = JRIEngine.createEngine();
             rEnvironment = rEngine.newEnvironment(null, true);
 		} catch (REngineException e) {
@@ -53,6 +46,7 @@ public class RExtension {
 	 * Destroy the REngine
 	 */
 	public void destroy(){
+        LOGGER.info("Destroying R Engine");
 		if(RExtension.rEngine != null)
 			RExtension.rEngine.close();
 	}
@@ -326,6 +320,8 @@ public class RExtension {
             return ((REXPString)rexp).asStrings()[0];
         }else if(rexp instanceof REXPLogical){
             return ((REXPLogical)rexp).asStrings()[0];
+        }else if(rexp instanceof REXPSymbol){
+            return ((REXPSymbol)rexp).asStrings()[0];
         }
         return null;
     }
