@@ -1,20 +1,20 @@
 package org.wso2.carbon.ml.extension;
 
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.rosuda.REngine.*;
 import org.rosuda.REngine.JRI.JRIEngine;
+import org.rosuda.REngine.*;
 import org.wso2.carbon.ml.extension.bean.MLFeature;
-import org.wso2.carbon.ml.extension.bean.MLWorkflow;
+import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.util.Constants;
 import org.wso2.carbon.ml.extension.util.WorkflowParser;
+
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 public class RExtension {
 
@@ -52,17 +52,17 @@ public class RExtension {
 	}
 
 	/**
-	 * Evaluates {@link MLWorkflow}. Exports PMML file to the default location.
+	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}. Exports PMML file to the default location.
 	 * 
-	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow} bean
+	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow} bean
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLWorkflow mlWorkflow) throws EvaluationException {
-		runScript(mlWorkflow, Constants.DEFAULT_EXPORT_PATH.toString());
+	public void evaluate(MLRWorkflow mlRWorkflow) throws EvaluationException {
+		runScript(mlRWorkflow, Constants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
-	 * Evaluates {@link MLWorkflow}. Parses JSON mapped workflow form the given
+	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}. Parses JSON mapped workflow form the given
 	 * URL. Exports PMML file to the default location.
 	 * 
 	 * @param workflowURL
@@ -76,7 +76,7 @@ public class RExtension {
 	}
 
 	/**
-	 * Evaluates {@link MLWorkflow}. Parses JSON mapped workflow form the given
+	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}. Parses JSON mapped workflow form the given
 	 * URL.
 	 * 
 	 * @param workflowURL
@@ -89,49 +89,49 @@ public class RExtension {
 	 */
 	public void evaluate(String workflowURL, String exportPath) throws FormattingException, InitializationException, EvaluationException {
 		WorkflowParser parser = new WorkflowParser();
-		MLWorkflow mlWorkflow = parser.parseWorkflow(workflowURL);
-		runScript(mlWorkflow, exportPath);
+		MLRWorkflow MLRWorkflow = parser.parseWorkflow(workflowURL);
+		runScript(MLRWorkflow, exportPath);
 	}
 
 	/**
-	 * Evaluates {@link MLWorkflow}
+	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
 	 *
-	 * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow} bean
+	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow} bean
 	 * @param exportPath
 	 *            absolute path to export PMML
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
-		runScript(mlWorkflow, exportPath);
+	public void evaluate(MLRWorkflow mlRWorkflow, String exportPath) throws EvaluationException {
+		runScript(mlRWorkflow, exportPath);
 	}
 
     /**]
      * Manages script generation process.
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
+     * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
      * @param exportPath absolute path to export PMML
      * @throws EvaluationException
      */
-	private void runScript(MLWorkflow mlWorkflow, String exportPath) throws EvaluationException {
+	private void runScript(MLRWorkflow mlRWorkflow, String exportPath) throws EvaluationException {
 		StringBuilder formula = new StringBuilder();
 
 		try {
 			REXP bestTune = null;
 
-			LOGGER.debug("#Reading CSV : " + mlWorkflow.getDatasetURL());
-			rEngine.parseAndEval("input <- read.csv('" + mlWorkflow.getDatasetURL() + "')", rEnvironment, false);
-			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/"+mlWorkflow.getDatasetURL()+"')");
+			LOGGER.debug("#Reading CSV : " + mlRWorkflow.getDatasetURL());
+			rEngine.parseAndEval("input <- read.csv('" + mlRWorkflow.getDatasetURL() + "')", rEnvironment, false);
+			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/"+ mlRWorkflow.getDatasetURL()+"')");
 
-			List<MLFeature> features = mlWorkflow.getFeatures();
+			List<MLFeature> features = mlRWorkflow.getFeatures();
 
-			if (mlWorkflow.getAlgorithmClass().equals("Classification")) {
-				formula.append(mlWorkflow.getResponseVariable());
+			if (mlRWorkflow.getAlgorithmClass().equals("Classification")) {
+				formula.append(mlRWorkflow.getResponseVariable());
 				formula.append(" ~ ");
 
 				boolean flag = false;
 
 				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
-						if (!mlWorkflow.getResponseVariable().equals(feature.getName())) {
+						if (!mlRWorkflow.getResponseVariable().equals(feature.getName())) {
 							if (flag)
 								formula.append("+");
 							formula.append(feature.getName());
@@ -144,11 +144,11 @@ public class RExtension {
 						impute(feature);
 					}
 				}
-				bestTune = trainModel(mlWorkflow, formula);
-				exportTrainedModel(mlWorkflow, formula, bestTune, exportPath);
-			} else if (mlWorkflow.getAlgorithmClass().equals("Clustering")) {
+				bestTune = trainModel(mlRWorkflow, formula);
+				exportTrainedModel(mlRWorkflow, formula, bestTune, exportPath);
+			} else if (mlRWorkflow.getAlgorithmClass().equals("Clustering")) {
 				formula.append("x = input$");
-				formula.append(mlWorkflow.getResponseVariable());
+				formula.append(mlRWorkflow.getResponseVariable());
 
 				for (MLFeature feature : features) {
 					if (feature.isInclude()) {
@@ -159,7 +159,7 @@ public class RExtension {
 						impute(feature);
 					}
 				}
-				clusterData(mlWorkflow, formula, exportPath);
+				clusterData(mlRWorkflow, formula, exportPath);
 			}
 		} catch (REngineException e) {
 			LOGGER.error(e.getMessage());
@@ -172,18 +172,18 @@ public class RExtension {
 
     /**
      * Trains the model and choose optimized parameters.
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
+     * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
      * @param formula formula of the model
      * @return the {@link org.rosuda.REngine.REXP} that contains the best parameters
      * @throws REngineException
      * @throws REXPMismatchException
      */
-    private REXP trainModel(MLWorkflow mlWorkflow, StringBuilder formula) throws REngineException,
+    private REXP trainModel(MLRWorkflow mlRWorkflow, StringBuilder formula) throws REngineException,
 	                                                                  REXPMismatchException {
 		rEngine.parseAndEval("library('caret')");
 		LOGGER.trace("library('caret')");
 
-        StringBuilder trainControl = appendControlParameters(mlWorkflow.getTrainControls());
+        StringBuilder trainControl = appendControlParameters(mlRWorkflow.getTrainControls());
         LOGGER.trace(trainControl.toString());
 		rEngine.parseAndEval(trainControl.toString());
 		/*Should install klaR, MASS and is libraries: ADD to documentation*/
@@ -192,10 +192,10 @@ public class RExtension {
 
 		script.append("model <- train(").append(formula).append(", method =");
 
-		script.append("'").append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("',data=input");
+		script.append("'").append(Constants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("',data=input");
 
 		// appending parameters to the script
-		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
+		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
 		if(appendHyperParameters(hyperParameters)){
 			script.append(",tuneGrid=tuneGrid");
 		}
@@ -205,11 +205,11 @@ public class RExtension {
 
 		// evaluating the R script
 		rEngine.parseAndEval(script.toString(), rEnvironment, false);
-		rEngine.parseAndEval("prediction<-predict(model,input[-match('" + mlWorkflow.getResponseVariable() + "',names(input))])", rEnvironment, false);
-		LOGGER.trace("prediction<-predict(model,input[-match('"+mlWorkflow.getResponseVariable()+"',names(input))])");
+		rEngine.parseAndEval("prediction<-predict(model,input[-match('" + mlRWorkflow.getResponseVariable() + "',names(input))])", rEnvironment, false);
+		LOGGER.trace("prediction<-predict(model,input[-match('" + mlRWorkflow.getResponseVariable() + "',names(input))])");
 
-		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+mlWorkflow.getResponseVariable() +")", rEnvironment, true);
-		LOGGER.trace("confusionMatrix(prediction,input$" + mlWorkflow.getResponseVariable() + ")");
+		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+ mlRWorkflow.getResponseVariable() +")", rEnvironment, true);
+		LOGGER.trace("confusionMatrix(prediction,input$" + mlRWorkflow.getResponseVariable() + ")");
 		return rEngine.parseAndEval("model$bestTune", rEnvironment, true);
 	}
 
@@ -278,17 +278,17 @@ public class RExtension {
 
     /**
      * Generates cluster model using kmeans algorithm
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
+     * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
      * @param formula formula of the model
      * @param exportPath absolute path to export
      * @throws REXPMismatchException
      * @throws REngineException
      */
-    private void clusterData(MLWorkflow mlWorkflow, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
+    private void clusterData(MLRWorkflow mlRWorkflow, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
 		StringBuilder clusterScript = new StringBuilder("model <- ");
-		clusterScript.append(Constants.ALGORITHM_MAP.get(mlWorkflow.getAlgorithmName())).append("(").append(formula.toString());
+		clusterScript.append(Constants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("(").append(formula.toString());
 
-		Map<String, String> hyperParameters = mlWorkflow.getHyperParameters();
+		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
 		for(Map.Entry<String, String> entry : hyperParameters.entrySet()){
 			clusterScript.append(",").append(entry.getKey()).append("=").append(entry.getValue());
 		}
@@ -328,14 +328,14 @@ public class RExtension {
 
     /**
      * Exports the trained model to PMML
-     * @param mlWorkflow {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
+     * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
      * @param formula formula of the model
      * @param bestTune tuned parameters
      * @param exportPath absolute path to export
      * @throws REXPMismatchException
      * @throws REngineException
      */
-	private void exportTrainedModel(MLWorkflow mlWorkflow, StringBuilder formula, REXP bestTune, String exportPath) throws REXPMismatchException, REngineException {
+	private void exportTrainedModel(MLRWorkflow mlRWorkflow, StringBuilder formula, REXP bestTune, String exportPath) throws REXPMismatchException, REngineException {
 
 		StringBuilder parameters = new StringBuilder();
 
@@ -351,14 +351,14 @@ public class RExtension {
 		LOGGER.debug("#Exporting to PMML. Using library pmml");
 		LOGGER.trace("library('pmml')");
 		rEngine.parseAndEval("library('pmml')");
-		switch(mlWorkflow.getAlgorithmName()){
+		switch(mlRWorkflow.getAlgorithmName()){
 			case "NAIVE_BAYES":
 				LOGGER.trace("library('e1071')");
 				rEngine.parseAndEval("library('e1071')");
 				LOGGER.trace("bestModel<- naiveBayes("+parameters.toString()+")");
 				rEngine.parseAndEval("bestModel<- naiveBayes(" + parameters.toString() + ")", rEnvironment, false);
-				LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+mlWorkflow.getResponseVariable()+"\")");
-				rEngine.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\"" + mlWorkflow.getResponseVariable() + "\")", rEnvironment, false);
+				LOGGER.trace("modelpmml <- pmml(bestModel, dataset=input, predictedField=\""+ mlRWorkflow.getResponseVariable()+"\")");
+				rEngine.parseAndEval("modelpmml <- pmml(bestModel, dataset=input, predictedField=\"" + mlRWorkflow.getResponseVariable() + "\")", rEnvironment, false);
 				return;
 			case "LOGISTIC_REGRESSION":
 				LOGGER.trace("bestModel <- model$finalModel");

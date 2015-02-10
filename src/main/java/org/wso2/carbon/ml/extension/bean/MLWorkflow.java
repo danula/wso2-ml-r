@@ -31,7 +31,6 @@ public class MLWorkflow implements Serializable {
     private double trainDataFraction;
     private List<MLFeature> features;
     private Map<String, String> hyperParameters;
-    private Map<String, String> trainControls;
 
     /**
      * @return Returns machine learning workflow ID
@@ -145,18 +144,4 @@ public class MLWorkflow implements Serializable {
         this.hyperParameters = hyperParameters;
     }
 
-    /**
-     *
-     * @return Returns train controls
-     */
-    public Map<String, String> getTrainControls() {
-        return trainControls;
-    }
-
-    /**
-     * @param trainControls Sets training controls
-     */
-    public void setTrainControls(Map<String, String> trainControls) {
-        this.trainControls = trainControls;
-    }
 }

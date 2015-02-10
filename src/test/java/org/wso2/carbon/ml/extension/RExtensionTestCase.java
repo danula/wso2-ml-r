@@ -4,7 +4,7 @@ import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.wso2.carbon.ml.extension.bean.MLWorkflow;
+import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
@@ -14,7 +14,6 @@ import org.wso2.carbon.ml.extension.util.WorkflowParser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -27,14 +26,14 @@ public class RExtensionTestCase {
 	
 	private RExtension rex;
 	
-	private MLWorkflow mlWorkflow;
+	private MLRWorkflow mlRWorkflow;
 	
 	@Before
 	public void setup(){
 		try {
             WorkflowParser parser = new WorkflowParser();
 	        this.rex = new RExtension();
-            this.mlWorkflow = parser.parseWorkflow(RESOURCE_LOCATION + "workflow-1.json");
+            this.mlRWorkflow = parser.parseWorkflow(RESOURCE_LOCATION + "workflow-1.json");
         } catch (InitializationException e) {
             fail("Unexpected Exception: Cannot create R engine");
         }  catch (FormattingException e) {
@@ -51,7 +50,7 @@ public class RExtensionTestCase {
             //pmml should be exported in the given location
             assertNotNull(fr);
 
-            rex.evaluate(mlWorkflow, "src/test/resources/Temp/model1-2.pmml");
+            rex.evaluate(mlRWorkflow, "src/test/resources/Temp/model1-2.pmml");
             fr = new FileInputStream("src/test/resources/Temp/model1-2.pmml");
             //pmml should be exported in the given location
             assertNotNull(fr);
@@ -74,7 +73,7 @@ public class RExtensionTestCase {
             //pmml should be exported in the default location
             assertNotNull(fr);
 
-            rex.evaluate(mlWorkflow);
+            rex.evaluate(mlRWorkflow);
             fr = new FileInputStream(Constants.DEFAULT_EXPORT_PATH.toString());
             //pmml should be exported in the default location
             assertNotNull(fr);

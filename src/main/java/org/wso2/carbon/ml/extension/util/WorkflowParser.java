@@ -2,10 +2,10 @@ package org.wso2.carbon.ml.extension.util;
 
 import com.google.gson.*;
 import org.apache.log4j.Logger;
+import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 import org.wso2.carbon.ml.extension.bean.MLFeature;
-import org.wso2.carbon.ml.extension.bean.MLWorkflow;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -19,11 +19,11 @@ public class WorkflowParser {
      * Parses Workflow JSON file
      *
      * @param fileURL the URL of the JSON file
-     * @return {@link org.wso2.carbon.ml.extension.bean.MLWorkflow}
+     * @return {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
      * @throws org.wso2.carbon.ml.extension.exception.InitializationException
      * @throws org.wso2.carbon.ml.extension.exception.FormattingException
      */
-    public MLWorkflow parseWorkflow(String fileURL) throws InitializationException, FormattingException {
+    public MLRWorkflow parseWorkflow(String fileURL) throws InitializationException, FormattingException {
 
         LOGGER.debug("Parsing Workflow");
         JsonParser parser = new JsonParser();
@@ -53,45 +53,45 @@ public class WorkflowParser {
     }
 
     /**
-     * Populate the MLWorkflow Bean
+     * Populate the MLRWorkflow Bean
      *
      * @param jsonElement the parsed JSON object
-     * @return MLWorkflow Bean
+     * @return MLRWorkflow Bean
      */
-    private MLWorkflow populateWorkflowBean(JsonElement jsonElement) {
+    private MLRWorkflow populateWorkflowBean(JsonElement jsonElement) {
 
-        MLWorkflow mlWorkflow = new MLWorkflow();
+        MLRWorkflow mlRWorkflow = new MLRWorkflow();
         JsonObject workflow = jsonElement.getAsJsonObject();
         // populating MLWorkfolw data
-        mlWorkflow.setAlgorithmClass(workflow.getAsJsonObject().get("algorithmClass").getAsString());
-        mlWorkflow.setAlgorithmName(workflow.get("algorithmName").getAsString());
-        mlWorkflow.setDatasetURL(workflow.get("datasetURL").getAsString());
-        mlWorkflow.setResponseVariable(workflow.get("responseVariable").getAsString());
-        mlWorkflow.setTrainDataFraction(workflow.get("trainDataFraction").getAsDouble());
-        mlWorkflow.setWorkflowID(workflow.get("workflowID").getAsString());
+        mlRWorkflow.setAlgorithmClass(workflow.getAsJsonObject().get("algorithmClass").getAsString());
+        mlRWorkflow.setAlgorithmName(workflow.get("algorithmName").getAsString());
+        mlRWorkflow.setDatasetURL(workflow.get("datasetURL").getAsString());
+        mlRWorkflow.setResponseVariable(workflow.get("responseVariable").getAsString());
+        mlRWorkflow.setTrainDataFraction(workflow.get("trainDataFraction").getAsDouble());
+        mlRWorkflow.setWorkflowID(workflow.get("workflowID").getAsString());
 
         // populating features
         JsonArray features = workflow.get("features").getAsJsonArray();
         if (features != null)
-            mlWorkflow.setFeatures(populateFeatures(features));
+            mlRWorkflow.setFeatures(populateFeatures(features));
 
         // populating hyper parameters
         JsonElement hyperParameters = workflow.get("hyperParameters");
         if (hyperParameters != null)
-            mlWorkflow.setHyperParameters(populateParameters(hyperParameters));
+            mlRWorkflow.setHyperParameters(populateParameters(hyperParameters));
 
         JsonElement trainControls = workflow.get("trainControls");
         if(trainControls != null) {
-            mlWorkflow.setTrainControls(populateParameters(trainControls));
+            mlRWorkflow.setTrainControls(populateParameters(trainControls));
         } else {
-            mlWorkflow.setTrainControls(Constants.DEFAULT_TRAIN_CONTROLS);
+            mlRWorkflow.setTrainControls(Constants.DEFAULT_TRAIN_CONTROLS);
         }
 
-        return mlWorkflow;
+        return mlRWorkflow;
     }
 
     /**
-     * Populate the feature set of the MLWorkflow bean
+     * Populate the feature set of the MLRWorkflow bean
      *
      * @param features the JSON array extracted from the JSON file
      * @return list of features

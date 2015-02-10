@@ -1,14 +1,14 @@
 package org.wso2.carbon.ml.extension.util;
 
-import java.util.List;
-import java.util.Map;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.wso2.carbon.ml.extension.bean.MLFeature;
+import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
-import org.wso2.carbon.ml.extension.bean.MLFeature;
-import org.wso2.carbon.ml.extension.bean.MLWorkflow;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 public class WorkflowParserTestCase {
 
 	private static final String RESOURCE_LOCATION = "src/test/resources/workflow-1.json";
-	MLWorkflow workflow;
+	MLRWorkflow workflow;
 	WorkflowParser init;
 	
 	@Before
