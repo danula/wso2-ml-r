@@ -1,4 +1,4 @@
-package org.wso2.carbon.ml.extension.util;
+package org.wso2.carbon.ml.extension.utils;
 
 import com.google.gson.*;
 import org.apache.log4j.Logger;
@@ -84,7 +84,7 @@ public class WorkflowParser {
         if(trainControls != null) {
             mlRWorkflow.setTrainControls(populateParameters(trainControls));
         } else {
-            mlRWorkflow.setTrainControls(Constants.DEFAULT_TRAIN_CONTROLS);
+            mlRWorkflow.setTrainControls(CommonConstants.DEFAULT_TRAIN_CONTROLS);
         }
 
         return mlRWorkflow;

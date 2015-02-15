@@ -1,4 +1,4 @@
-package org.wso2.carbon.ml.extension.util;
+package org.wso2.carbon.ml.extension.utils;
 
 import org.junit.Before;
 import org.junit.Test;

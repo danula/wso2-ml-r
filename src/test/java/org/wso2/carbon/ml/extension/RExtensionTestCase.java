@@ -8,8 +8,8 @@ import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
-import org.wso2.carbon.ml.extension.util.Constants;
-import org.wso2.carbon.ml.extension.util.WorkflowParser;
+import org.wso2.carbon.ml.extension.utils.CommonConstants;
+import org.wso2.carbon.ml.extension.utils.WorkflowParser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,12 +69,12 @@ public class RExtensionTestCase {
 	public void testEvaluate2(){
         try {
             rex.evaluate(RESOURCE_LOCATION+"workflow-3.json");
-            FileInputStream fr = new FileInputStream(Constants.DEFAULT_EXPORT_PATH.toString());
+            FileInputStream fr = new FileInputStream(CommonConstants.DEFAULT_EXPORT_PATH.toString());
             //pmml should be exported in the default location
             assertNotNull(fr);
 
             rex.evaluate(mlRWorkflow);
-            fr = new FileInputStream(Constants.DEFAULT_EXPORT_PATH.toString());
+            fr = new FileInputStream(CommonConstants.DEFAULT_EXPORT_PATH.toString());
             //pmml should be exported in the default location
             assertNotNull(fr);
         } catch (FormattingException e) {
@@ -99,7 +99,7 @@ public class RExtensionTestCase {
 		file = new File("src/test/resources/Temp/model1-2.pmml");
         b = file.delete();
 
-		file = new File(Constants.DEFAULT_EXPORT_PATH.toString());
+		file = new File(CommonConstants.DEFAULT_EXPORT_PATH.toString());
         b = file.delete();
 
 	}

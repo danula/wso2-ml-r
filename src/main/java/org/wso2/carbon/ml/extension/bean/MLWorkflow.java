@@ -61,14 +61,14 @@ public class MLWorkflow implements Serializable {
     }
 
     /**
-     * @return Returns machine learning algorithm name
+     * @return Returns machine learning algorithms name
      */
     public String getAlgorithmName() {
         return algorithmName;
     }
 
     /**
-     * @param algorithmName Sets machine learning algorithm name
+     * @param algorithmName Sets machine learning algorithms name
      */
     public void setAlgorithmName(String algorithmName) {
         this.algorithmName = algorithmName;
@@ -117,14 +117,14 @@ public class MLWorkflow implements Serializable {
     }
 
     /**
-     * @return Returns machine learning algorithm class e.g. Classification
+     * @return Returns machine learning algorithms class e.g. Classification
      */
     public String getAlgorithmClass() {
         return algorithmClass;
     }
 
     /**
-     * @param algorithmClass Sets machine learning algorithm class
+     * @param algorithmClass Sets machine learning algorithms class
      */
     public void setAlgorithmClass(String algorithmClass) {
         this.algorithmClass = algorithmClass;

@@ -9,8 +9,8 @@ import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
 import org.wso2.carbon.ml.extension.exception.FormattingException;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
-import org.wso2.carbon.ml.extension.util.Constants;
-import org.wso2.carbon.ml.extension.util.WorkflowParser;
+import org.wso2.carbon.ml.extension.utils.CommonConstants;
+import org.wso2.carbon.ml.extension.utils.WorkflowParser;
 
 import java.nio.file.Paths;
 import java.util.List;
@@ -58,7 +58,7 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(MLRWorkflow mlRWorkflow) throws EvaluationException {
-		runScript(mlRWorkflow, Constants.DEFAULT_EXPORT_PATH.toString());
+		runScript(mlRWorkflow, CommonConstants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
 	public void evaluate(String workflowURL) throws FormattingException, InitializationException, EvaluationException {
-		evaluate(workflowURL, Constants.DEFAULT_EXPORT_PATH.toString());
+		evaluate(workflowURL, CommonConstants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
@@ -192,7 +192,7 @@ public class RExtension {
 
 		script.append("model <- train(").append(formula).append(", method =");
 
-		script.append("'").append(Constants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("',data=input");
+		script.append("'").append(CommonConstants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("',data=input");
 
 		// appending parameters to the script
 		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
@@ -286,7 +286,7 @@ public class RExtension {
      */
     private void clusterData(MLRWorkflow mlRWorkflow, StringBuilder formula, String exportPath) throws REXPMismatchException, REngineException {
 		StringBuilder clusterScript = new StringBuilder("model <- ");
-		clusterScript.append(Constants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("(").append(formula.toString());
+		clusterScript.append(CommonConstants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("(").append(formula.toString());
 
 		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
 		for(Map.Entry<String, String> entry : hyperParameters.entrySet()){
