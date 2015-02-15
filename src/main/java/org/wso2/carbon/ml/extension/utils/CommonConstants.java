@@ -38,4 +38,29 @@ public class CommonConstants {
         DEFAULT_TRAIN_CONTROLS.put("number", "10");
         DEFAULT_TRAIN_CONTROLS.put("repeats", "4");
     }
+
+    /*workflow constants*/
+
+    public static final String CLASSIFICATION = "Classification";
+    public static final String CLUSTERING = "Clustering";
+    public static final String CATEGORICAL = "CATEGORICAL";
+    public static final String MEAN_REPLACE = "REPLACE_WTH_MEAN";
+    public static final String DISCARD = "DISCARD";
+
+
+    /*R constants*/
+
+    public static final String DATA = "input";
+    public static final String MODEL = "model";
+    public static final String TUNED_PARAMETERS = "model$bestTune";
+    public static final String TRAIN_CONTROL_PARAMETERS = "train_control";
+    public static final String TUNE_GRID = "tuneGrid";
+    public static final String FINAL_MODEL = "model$finalModel";
+    public static final String TUNED_MODEL = "bestModel";
+    public static final String PMML_MODEL = "pmmlModel";
+
+    /*Common R libraries*/
+
+    public static final String LIBRARY_CARET = "library('caret')";
+    public static final String LIBRARY_PMML = "library('pmml')";
 }
