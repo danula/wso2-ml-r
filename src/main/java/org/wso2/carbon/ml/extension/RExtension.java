@@ -112,63 +112,64 @@ public class RExtension {
      * @throws EvaluationException
      */
 	private void runScript(MLRWorkflow mlRWorkflow, String exportPath) throws EvaluationException {
-		StringBuilder formula = new StringBuilder();
-
-		try {
-			REXP bestTune = null;
-
-			LOGGER.debug("#Reading CSV : " + mlRWorkflow.getDatasetURL());
-			rEngine.parseAndEval("input <- read.csv('" + mlRWorkflow.getDatasetURL() + "')", rEnvironment, false);
-			LOGGER.trace("input <- read.csv('/home/madawa/WSO2/Training/Project/workspace/wso2-ml-r/"+ mlRWorkflow.getDatasetURL()+"')");
-
-			List<MLFeature> features = mlRWorkflow.getFeatures();
-
-			if (mlRWorkflow.getAlgorithmClass().equals("Classification")) {
-				formula.append(mlRWorkflow.getResponseVariable());
-				formula.append(" ~ ");
-
-				boolean flag = false;
-
-				for (MLFeature feature : features) {
-					if (feature.isInclude()) {
-						if (!mlRWorkflow.getResponseVariable().equals(feature.getName())) {
-							if (flag)
-								formula.append("+");
-							formula.append(feature.getName());
-							flag = true;
-						}
-
-						if (feature.getType().equals("CATEGORICAL"))
-							defineCategoricalData(feature);
-
-						impute(feature);
-					}
-				}
-				bestTune = trainModel(mlRWorkflow, formula);
-				exportTrainedModel(mlRWorkflow, formula, bestTune, exportPath);
-			} else if (mlRWorkflow.getAlgorithmClass().equals("Clustering")) {
-				formula.append("x = input$");
-				formula.append(mlRWorkflow.getResponseVariable());
-
-				for (MLFeature feature : features) {
-					if (feature.isInclude()) {
-
-						if (feature.getType().equals("CATEGORICAL"))
-							defineCategoricalData(feature);
-
-						impute(feature);
-					}
-				}
-				clusterData(mlRWorkflow, formula, exportPath);
-			}
-		} catch (REngineException e) {
-			LOGGER.error(e.getMessage());
-			throw new EvaluationException("Operation requested cannot be executed in R", e);
-		} catch (REXPMismatchException e) {
-			LOGGER.error(e.getMessage());
-			throw new EvaluationException("Operation requested is not supported by the given R object type", e);
-		}
+		StringBuilder formula = generateFormula(mlRWorkflow);
 	}
+
+    private StringBuilder generateFormula(MLRWorkflow mlRWorkflow) throws EvaluationException {
+        StringBuilder formula = new StringBuilder();
+
+        try {
+
+            rEngine.parseAndEval(CommonConstants.DATA + " <- read.csv('" + mlRWorkflow.getDatasetURL() + "')", rEnvironment, false);
+            LOGGER.trace("input <- read.csv('"+ mlRWorkflow.getDatasetURL()+"')");
+
+            List<MLFeature> features = mlRWorkflow.getFeatures();
+
+            if (mlRWorkflow.getAlgorithmClass().equals(CommonConstants.CLASSIFICATION)) {
+                formula.append(mlRWorkflow.getResponseVariable());
+                formula.append(" ~ ");
+
+                boolean flag = false;
+
+                for (MLFeature feature : features) {
+                    if (feature.isInclude()) {
+                        if (!mlRWorkflow.getResponseVariable().equals(feature.getName())) {
+                            if (flag)
+                                formula.append("+");
+                            formula.append(feature.getName());
+                            flag = true;
+                        }
+
+                        if (feature.getType().equals(CommonConstants.CATEGORICAL))
+                            defineCategoricalData(feature);
+
+                        impute(feature);
+                    }
+                }
+            } else if (mlRWorkflow.getAlgorithmClass().equals(CommonConstants.CLUSTERING)) {
+                formula.append("x = input$");
+                formula.append(mlRWorkflow.getResponseVariable());
+
+                for (MLFeature feature : features) {
+                    if (feature.isInclude()) {
+
+                        if (feature.getType().equals(CommonConstants.CATEGORICAL))
+                            defineCategoricalData(feature);
+
+                        impute(feature);
+                    }
+                }
+            }
+        } catch (REngineException e) {
+            LOGGER.error(e.getMessage());
+            throw new EvaluationException("Operation requested cannot be executed in R", e);
+        } catch (REXPMismatchException e) {
+            LOGGER.error(e.getMessage());
+            throw new EvaluationException("Operation requested is not supported by the given R object type", e);
+        }
+
+        return formula;
+    }
 
     /**
      * Trains the model and choose optimized parameters.
