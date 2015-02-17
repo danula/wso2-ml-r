@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.rosuda.REngine.*;
+import org.wso2.carbon.ml.extension.algorithms.AlgorithmFactory;
+import org.wso2.carbon.ml.extension.algorithms.RAlgorithm;
 import org.wso2.carbon.ml.extension.bean.MLFeature;
 import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.exception.EvaluationException;
@@ -13,6 +15,7 @@ import org.wso2.carbon.ml.extension.utils.CommonConstants;
 import org.wso2.carbon.ml.extension.utils.WorkflowParser;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -113,6 +116,20 @@ public class RExtension {
      */
 	private void runScript(MLRWorkflow mlRWorkflow, String exportPath) throws EvaluationException {
 		StringBuilder formula = generateFormula(mlRWorkflow);
+		RAlgorithm algorithm = AlgorithmFactory.getAlgorithm(mlRWorkflow.getAlgorithmName());
+		ArrayList<String> trainScript = algorithm.generateScript(mlRWorkflow, formula);
+		ArrayList<String> exportScript;
+
+		REXP out;
+		try {
+			for (String line : trainScript) {
+				out = rEngine.parseAndEval(line, rEnvironment, true);
+			}
+		} catch (REngineException e) {
+			throw new EvaluationException("Requested operation cannot be executed in R");
+		} catch (REXPMismatchException e) {
+			throw new EvaluationException("Operation requested is not supported by the given R object type");
+		}
 	}
 
     private StringBuilder generateFormula(MLRWorkflow mlRWorkflow) throws EvaluationException {
@@ -162,106 +179,25 @@ public class RExtension {
             }
         } catch (REngineException e) {
             LOGGER.error(e.getMessage());
-            throw new EvaluationException("Operation requested cannot be executed in R", e);
+            throw new EvaluationException("Operation requested cannot be executed in R");
         } catch (REXPMismatchException e) {
             LOGGER.error(e.getMessage());
-            throw new EvaluationException("Operation requested is not supported by the given R object type", e);
+            throw new EvaluationException("Operation requested is not supported by the given R object type");
         }
 
         return formula;
     }
 
-    /**
-     * Trains the model and choose optimized parameters.
-     * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
-     * @param formula formula of the model
-     * @return the {@link org.rosuda.REngine.REXP} that contains the best parameters
-     * @throws REngineException
-     * @throws REXPMismatchException
-     */
-    private REXP trainModel(MLRWorkflow mlRWorkflow, StringBuilder formula) throws REngineException,
-	                                                                  REXPMismatchException {
-		rEngine.parseAndEval("library('caret')");
-		LOGGER.trace("library('caret')");
-
-        StringBuilder trainControl = appendControlParameters(mlRWorkflow.getTrainControls());
-        LOGGER.trace(trainControl.toString());
-		rEngine.parseAndEval(trainControl.toString());
-		/*Should install klaR, MASS and is libraries: ADD to documentation*/
-
-		StringBuilder script = new StringBuilder();
-
-		script.append("model <- train(").append(formula).append(", method =");
-
-		script.append("'").append(CommonConstants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("',data=input");
-
-		// appending parameters to the script
-		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
-		if(appendHyperParameters(hyperParameters)){
-			script.append(",tuneGrid=tuneGrid");
-		}
-		script.append(",trControl=train_control)");
-		LOGGER.trace(script.toString());
-
-
-		// evaluating the R script
-		rEngine.parseAndEval(script.toString(), rEnvironment, false);
-		rEngine.parseAndEval("prediction<-predict(model,input[-match('" + mlRWorkflow.getResponseVariable() + "',names(input))])", rEnvironment, false);
-		LOGGER.trace("prediction<-predict(model,input[-match('" + mlRWorkflow.getResponseVariable() + "',names(input))])");
-
-		REXP out = rEngine.parseAndEval("confusionMatrix(prediction,input$"+ mlRWorkflow.getResponseVariable() +")", rEnvironment, true);
-		LOGGER.trace("confusionMatrix(prediction,input$" + mlRWorkflow.getResponseVariable() + ")");
-		return rEngine.parseAndEval("model$bestTune", rEnvironment, true);
-	}
-
-    private StringBuilder appendControlParameters(Map<String, String> trainControls){
-        StringBuilder trainControl = new StringBuilder("train_control <- trainControl(");
-        boolean first = true;
-        for(Map.Entry<String, String> entry : trainControls.entrySet()){
-            if(first)
-                first = false;
-            else
-                trainControl.append(", ");
-
-            if(entry.getKey().equals("method")){
-                trainControl.append(entry.getKey()).append("='").append(entry.getValue()).append("'");
-                continue;
-            }
-
-            trainControl.append(entry.getKey()).append("=").append(entry.getValue());
-        }
-        trainControl.append(")");
-
-        return  trainControl;
-    }
-
-	private boolean appendHyperParameters(Map<String, String> hyperParameters) throws REXPMismatchException, REngineException {
-		StringBuilder tuneGrid = new StringBuilder();
-		boolean first = true;
-		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
-			if(first){
-				tuneGrid.append("tuneGrid <-  expand.grid(");
-				first = false;
-			}else {
-				tuneGrid.append(",");
-			}
-			tuneGrid.append(entry.getKey()).append("=").append(entry.getValue());
-		}
-		if(!first) tuneGrid.append(")");
-		rEngine.parseAndEval(tuneGrid.toString(), rEnvironment, false);
-		return !first;
-	}
-
 	private void impute(MLFeature feature) throws REngineException, REXPMismatchException {
 		String name = feature.getName();
-		if (feature.getImputeOption().equals("REPLACE_WTH_MEAN")) {
+		if (feature.getImputeOption().equals(CommonConstants.MEAN_REPLACE)) {
 
 			LOGGER.debug("#Impute - Replacing with mean " + name);
 			rEngine.parseAndEval("temp <- mean(input$" + name + ",na.rm=TRUE)", rEnvironment, false);
 			LOGGER.trace("temp <- mean(input$" + name + ",na.rm=TRUE)");
 			rEngine.parseAndEval("input$" + name + "[is.na(input$" + name + ")] <- temp", rEnvironment, false);
 			LOGGER.trace("input$" + name + "[is.na(input$" + name + ")] <- temp");
-		} else if (feature.getImputeOption().equals("DISCARD")) {
+		} else if (feature.getImputeOption().equals(CommonConstants.DISCARD)) {
 			LOGGER.debug("#Impute - discard " + name);
 			rEngine.parseAndEval("input <- input[complete.cases(input$" + name + "),]", rEnvironment, false);
 			LOGGER.trace("input <- input[complete.cases(input$" + name + "),]");
@@ -272,8 +208,8 @@ public class RExtension {
 	                                                               REXPMismatchException {
 		String name = feature.getName();
 		LOGGER.debug("#Define as categorical : " + name);
-		rEngine.parseAndEval("input$" + name + "<- factor(input$" + name + ")", rEnvironment, false);
-		LOGGER.trace("input$" + name + "<- factor(input$" + name + ")");
+		rEngine.parseAndEval(CommonConstants.DATA + "$" + name + "<- factor(input$" + name + ")", rEnvironment, false);
+		LOGGER.trace(CommonConstants.DATA + "$" + name + "<- factor(input$" + name + ")");
 
 	}
 
