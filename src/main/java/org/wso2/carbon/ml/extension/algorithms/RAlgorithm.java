@@ -80,6 +80,6 @@ public abstract class RAlgorithm {
      */
     public abstract ArrayList<String> generatePMML(StringBuilder parameters, MLRWorkflow mlrWorkflow);
 
-	public abstract ArrayList<String> generateAdditionalScripts(MLRWorkflow mlRWorkflow);
+	public abstract void runAdditionalScripts(MLRWorkflow mlRWorkflow);
 
 }
