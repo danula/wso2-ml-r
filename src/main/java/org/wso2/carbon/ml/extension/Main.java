@@ -14,15 +14,13 @@ public class Main {
         RExtension rex = null;
         try {
             rex = new RExtension();
-            rex.evaluate("src/test/resources/workflow-3.json");
+            rex.generateModel("src/test/resources/workflow-1.json");
         } catch (FormattingException e) {
             e.printStackTrace();
         } catch (EvaluationException e) {
             e.printStackTrace();
         } catch (InitializationException e) {
             e.printStackTrace();
-        } finally{
-            rex.destroyREngine();
         }
         
         LOGGER.info(System.currentTimeMillis() - st);

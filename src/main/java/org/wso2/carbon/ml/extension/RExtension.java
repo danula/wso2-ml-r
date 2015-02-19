@@ -153,8 +153,6 @@ public class RExtension {
 		try {
 			log.info("Executing training script in R.");
 			out = executeScriptInR(trainScript, true);
-			log.info("Executing additional scripts.");
-			algorithm.runAdditionalScripts(mlRWorkflow);
 
 			StringBuilder parameters = new StringBuilder();
 			parameters.append(formula).append(",data=" + CommonConstants.DATASET);

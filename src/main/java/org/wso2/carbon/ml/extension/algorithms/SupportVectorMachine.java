@@ -21,7 +21,4 @@ public class SupportVectorMachine extends RAlgorithm {
 		return modelScript;
 	}
 
-	@Override public void runAdditionalScripts(MLRWorkflow mlRWorkflow) {
-
-	}
 }

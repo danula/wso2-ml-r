@@ -16,7 +16,4 @@ public class LogisticRegression extends RAlgorithm{
 		return modelScript;
 	}
 
-	@Override public void runAdditionalScripts(MLRWorkflow mlRWorkflow) {
-
-	}
 }

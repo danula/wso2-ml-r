@@ -25,7 +25,4 @@ public class NaiveBayes extends RAlgorithm {
 		return modelScript;
 	}
 
-	@Override public void runAdditionalScripts(MLRWorkflow mlRWorkflow) {
-
-	}
 }

@@ -31,7 +31,4 @@ public class KMeans extends RAlgorithm {
 		return modelScript;
 	}
 
-	@Override public void runAdditionalScripts(MLRWorkflow mlRWorkflow) {
-
-	}
 }

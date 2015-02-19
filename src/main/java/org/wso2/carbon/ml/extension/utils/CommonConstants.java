@@ -42,6 +42,7 @@ public class CommonConstants {
     public static final String FINAL_MODEL = "model$finalModel";
     public static final String TUNED_MODEL = "bestModel";
     public static final String PMML_MODEL = "pmmlModel";
+	public static final String PREDICTION = "prediction";
 
     /**
      * Common R libraries

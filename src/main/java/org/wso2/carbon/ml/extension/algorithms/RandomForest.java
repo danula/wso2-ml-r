@@ -22,7 +22,4 @@ public class RandomForest extends RAlgorithm{
 		return modelScript;
 	}
 
-	@Override public void runAdditionalScripts(MLRWorkflow mlRWorkflow) {
-
-	}
 }
