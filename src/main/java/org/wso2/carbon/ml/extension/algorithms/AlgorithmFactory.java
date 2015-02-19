@@ -41,6 +41,8 @@ public class AlgorithmFactory {
 
 		    if(object instanceof RAlgorithm) {
 			    return (RAlgorithm) object;
+		    }else {
+			    log.error("Unexpected error creating instance of the algorithm class");
 		    }
 
 	    } catch (ClassNotFoundException e) {
