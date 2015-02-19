@@ -136,6 +136,11 @@ public class RExtension {
 		}
 
 		RAlgorithm algorithm = algorithmFactory.getAlgorithmObject(mlRWorkflow.getAlgorithmName());
+
+		if(algorithm == null) {
+			throw new EvaluationException("Unexpected error instantiating the algorithm class.");
+		}
+
 		ArrayList<String> trainScript = algorithm.generateScript(mlRWorkflow, formula);
 		ArrayList<String> exportScript;
 
@@ -148,6 +153,8 @@ public class RExtension {
 		try {
 			log.info("Executing training script in R.");
 			out = executeScriptInR(trainScript, true);
+			log.info("Executing additional scripts.");
+			algorithm.runAdditionalScripts(mlRWorkflow);
 
 			StringBuilder parameters = new StringBuilder();
 			parameters.append(formula).append(",data=" + CommonConstants.DATASET);
@@ -194,7 +201,16 @@ public class RExtension {
 		}
 	}
 
-	private REXP executeScriptInR(ArrayList<String> script, boolean requireOutput)
+	/**
+	 * Execute a given list of scripts in R.
+	 *
+	 * @param script list of R script
+	 * @param requireOutput whether an output is required
+	 * @return output {@link org.rosuda.REngine.REXP}
+	 * @throws REXPMismatchException
+	 * @throws REngineException
+	 */
+	public REXP executeScriptInR(List<String> script, boolean requireOutput)
 			throws REXPMismatchException, REngineException {
 		REXP out = null;
 		for (String line : script) {
@@ -203,6 +219,21 @@ public class RExtension {
 		}
 
 		return out;
+	}
+
+	/**
+	 * Execute a given script line in R.
+	 *
+	 * @param script single line of script
+	 * @param requireOutput whether an output is required
+	 * @return output {@link org.rosuda.REngine.REXP}
+	 * @throws REXPMismatchException
+	 * @throws REngineException
+	 */
+	public REXP executeLineInR(String script, boolean requireOutput)
+			throws REXPMismatchException, REngineException {
+		log.trace(script);
+		return rEngine.parseAndEval(script, rEnvironment, requireOutput);
 	}
 
 	/**

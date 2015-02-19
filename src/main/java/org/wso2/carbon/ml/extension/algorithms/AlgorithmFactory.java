@@ -21,13 +21,18 @@ public class AlgorithmFactory {
 
 
 	private AlgorithmFactory() throws InitializationException {
-		boolean b = readProperties();
+		boolean success = readProperties();
 
-		if(!b) {
+		if(!success) {
 			throw new InitializationException("Unexpected error reading algorithm properties file. ");
 		}
 	}
 
+	/**
+	 * Creates an {@link org.wso2.carbon.ml.extension.algorithms.AlgorithmFactory} object
+	 *
+	 * @return the AlgorithmFactory object
+	 */
 	public static AlgorithmFactory getAlgorithmFactory() {
 		if(algorithmFactory == null) {
 			log.info("Create AlgorithmFactory.");
@@ -42,6 +47,14 @@ public class AlgorithmFactory {
 		return algorithmFactory;
 	}
 
+	/**
+	 * Creates a RAlgorithm object for the given algorithm name.
+	 *
+	 * @param algorithmName the algorithm name
+	 * @return a concrete object of a sub class of RAlgorithm
+	 *
+	 * @see org.wso2.carbon.ml.extension.algorithms.RAlgorithm
+	 */
     public RAlgorithm getAlgorithmObject(String algorithmName){
 		log.debug("Creating algorithm object for " + algorithmName + "from class: " + algorithmClasses.get(algorithmName));
 	    try {
