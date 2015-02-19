@@ -129,7 +129,8 @@ public class RExtension {
 		}
 
 		StringBuilder formula = generateFormula(mlRWorkflow);
-		RAlgorithm algorithm = AlgorithmFactory.getAlgorithm(mlRWorkflow.getAlgorithmName());
+		AlgorithmFactory algorithmFactory = AlgorithmFactory.getAlgorithmFactory();
+		RAlgorithm algorithm = algorithmFactory.getAlgorithmObject(mlRWorkflow.getAlgorithmName());
 		ArrayList<String> trainScript = algorithm.generateScript(mlRWorkflow, formula);
 		ArrayList<String> exportScript;
 
