@@ -1,9 +1,15 @@
 package org.wso2.carbon.ml.extension.algorithms;
 
 import org.apache.log4j.Logger;
+import org.wso2.carbon.ml.extension.exception.InitializationException;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class AlgorithmFactory {
 
@@ -14,19 +20,23 @@ public class AlgorithmFactory {
 
 
 
-	private AlgorithmFactory() {
-		algorithmClasses.put("RANDOM_FOREST", "org.wso2.carbon.ml.extension.algorithms.RandomForest");
-		algorithmClasses.put("LOGISTIC_REGRESSION", "org.wso2.carbon.ml.extension.algorithms.LogisticRegression");
-		algorithmClasses.put("SVM", "org.wso2.carbon.ml.extension.algorithms.SupportVectorMachine");
-		algorithmClasses.put("NAIVE_BAYES", "org.wso2.carbon.ml.extension.algorithms.NaiveBayes");
-		algorithmClasses.put("DECISION_TREES", "org.wso2.carbon.ml.extension.algorithms.DecisionTree");
-		algorithmClasses.put("KMEANS", "org.wso2.carbon.ml.extension.algorithms.KMeans");
+	private AlgorithmFactory() throws InitializationException {
+		boolean b = readProperties();
+
+		if(!b) {
+			throw new InitializationException("Unexpected error reading algorithm properties file. ");
+		}
 	}
 
 	public static AlgorithmFactory getAlgorithmFactory() {
 		if(algorithmFactory == null) {
 			log.info("Create AlgorithmFactory.");
-			return new AlgorithmFactory();
+			try {
+				algorithmFactory = new AlgorithmFactory();
+			} catch (InitializationException e) {
+				log.error("Unexpected error reading algorithm properties file. ");
+				algorithmFactory = null;
+			}
 		}
 
 		return algorithmFactory;
@@ -54,4 +64,27 @@ public class AlgorithmFactory {
 	    }
 	    return null;
     }
+
+	private boolean readProperties() {
+		Properties algorithmProperties = new Properties();
+		InputStream inStream;
+
+		try{
+			inStream = new FileInputStream("algorithms.properties");
+
+			algorithmProperties.load(inStream);
+
+			Enumeration<?> e = algorithmProperties.propertyNames();
+
+			while(e.hasMoreElements()) {
+				String key = (String) e.nextElement();
+				String value = algorithmProperties.getProperty(key);
+				algorithmClasses.put(key, value);
+			}
+		} catch (IOException e) {
+			return false;
+		}
+
+		return true;
+	}
 }
