@@ -45,12 +45,13 @@ public class RExtensionTestCase {
 	@Test
 	public void testEvaluate1(){
         try {
-            rex.evaluate(RESOURCE_LOCATION + "workflow-1.json", "src/test/resources/Temp/model1-1.pmml");
+            rex.generateModel(RESOURCE_LOCATION + "workflow-1.json",
+                              "src/test/resources/Temp/model1-1.pmml");
             FileInputStream fr = new FileInputStream("src/test/resources/Temp/model1-1.pmml");
             //pmml should be exported in the given location
             assertNotNull(fr);
 
-            rex.evaluate(mlRWorkflow, "src/test/resources/Temp/model1-2.pmml");
+            rex.generateModel(mlRWorkflow, "src/test/resources/Temp/model1-2.pmml");
             fr = new FileInputStream("src/test/resources/Temp/model1-2.pmml");
             //pmml should be exported in the given location
             assertNotNull(fr);
@@ -68,12 +69,12 @@ public class RExtensionTestCase {
 	@Test
 	public void testEvaluate2(){
         try {
-            rex.evaluate(RESOURCE_LOCATION+"workflow-3.json");
+            rex.generateModel(RESOURCE_LOCATION + "workflow-3.json");
             FileInputStream fr = new FileInputStream(CommonConstants.DEFAULT_EXPORT_PATH.toString());
             //pmml should be exported in the default location
             assertNotNull(fr);
 
-            rex.evaluate(mlRWorkflow);
+            rex.generateModel(mlRWorkflow);
             fr = new FileInputStream(CommonConstants.DEFAULT_EXPORT_PATH.toString());
             //pmml should be exported in the default location
             assertNotNull(fr);
