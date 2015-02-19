@@ -130,6 +130,11 @@ public class RExtension {
 
 		StringBuilder formula = generateFormula(mlRWorkflow);
 		AlgorithmFactory algorithmFactory = AlgorithmFactory.getAlgorithmFactory();
+
+		if(algorithmFactory == null){
+			throw new EvaluationException("Unexpected error creating AlgorithmFactory.");
+		}
+
 		RAlgorithm algorithm = algorithmFactory.getAlgorithmObject(mlRWorkflow.getAlgorithmName());
 		ArrayList<String> trainScript = algorithm.generateScript(mlRWorkflow, formula);
 		ArrayList<String> exportScript;
