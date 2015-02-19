@@ -4,16 +4,9 @@ import org.wso2.carbon.ml.extension.bean.MLRWorkflow;
 import org.wso2.carbon.ml.extension.utils.CommonConstants;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public abstract class RAlgorithm {
-
-    private List<String> rLibraries;
-
-    public RAlgorithm(String algorithmName, List<String> rLibraries){
-        this.rLibraries = rLibraries;
-    }
 
     public ArrayList<String> generateScript(MLRWorkflow mlRWorkflow, StringBuilder formula){
         ArrayList<String> script = new ArrayList<>();
@@ -39,7 +32,7 @@ public abstract class RAlgorithm {
         return script;
     }
 
-	protected final StringBuilder appendControlParameters(MLRWorkflow mlRWorkflow){
+	protected StringBuilder appendControlParameters(MLRWorkflow mlRWorkflow){
 		Map<String, String> trainControls = mlRWorkflow.getTrainControls();
 		StringBuilder trainControl = new StringBuilder(CommonConstants.TRAIN_CONTROL_PARAMETERS + " <- trainControl(");
 		boolean first = true;
@@ -61,7 +54,7 @@ public abstract class RAlgorithm {
 		return  trainControl;
 	}
 
-	protected final StringBuilder appendHyperParameters(MLRWorkflow mlRWorkflow) {
+	protected StringBuilder appendHyperParameters(MLRWorkflow mlRWorkflow) {
 
 		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
 		StringBuilder tuneGrid = new StringBuilder();
@@ -77,14 +70,6 @@ public abstract class RAlgorithm {
 		}
 		if(!first) tuneGrid.append(")");
 		return tuneGrid;
-	}
-
-	public List<String> getrLibraries() {
-		return rLibraries;
-	}
-
-	public void setrLibraries(List<String> rLibraries) {
-		this.rLibraries = rLibraries;
 	}
 
 	/**

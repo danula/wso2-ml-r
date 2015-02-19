@@ -50,7 +50,7 @@ public class CommonConstants {
 
     /*R constants*/
 
-    public static final String DATA = "input";
+    public static final String DATASET = "input";
     public static final String MODEL = "model";
     public static final String TUNED_PARAMETERS = "model$bestTune";
     public static final String TRAIN_CONTROL_PARAMETERS = "train_control";
@@ -63,4 +63,8 @@ public class CommonConstants {
 
     public static final String LIBRARY_CARET = "library('caret')";
     public static final String LIBRARY_PMML = "library('pmml')";
+
+	/*Classes*/
+
+	public static final String NAIVE_BAYES = "org.wso2.carbon.ml.extension.algorithms.NaiveBayes";
 }

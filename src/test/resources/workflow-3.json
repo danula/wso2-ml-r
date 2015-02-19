@@ -1,5 +1,5 @@
 { "algorithmClass" : "Classification",
-  "algorithmName" : "LOGISTIC_REGRESSION",
+  "algorithmName" : "NAIVE_BAYES",
   "datasetURL" : "src/test/resources/dataset-3.csv",
   "features" : [ { "imputeOption" : "REPLACE_WTH_MEAN",
         "include" : true,

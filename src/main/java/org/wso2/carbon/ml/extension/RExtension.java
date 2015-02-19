@@ -122,14 +122,41 @@ public class RExtension {
 
 		REXP out;
 		try {
-			for (String line : trainScript) {
-				out = rEngine.parseAndEval(line, rEnvironment, true);
+			out = executeScriptInR(trainScript, true);
+
+			StringBuilder parameters = new StringBuilder();
+			parameters.append(formula).append(",data="+CommonConstants.DATASET);
+
+			if(out == null) {
+				throw new EvaluationException("Unexpected error while tuning parameters. ");
 			}
+
+			String[] names = out._attr().asList().at("names").asStrings();
+			RList values = out.asList();
+
+			for(int i = 0; i < names.length; ++i) {
+				parameters.append(",").append(names[i]).append("=").append(getDataElement(values.at(i)));
+			}
+
+			exportScript = algorithm.generatePMML(parameters, mlRWorkflow);
+			exportScript.add("write(toString("+CommonConstants.PMML_MODEL+"),file = '" + Paths.get(exportPath).toString() + "')");
+			executeScriptInR(exportScript, false);
 		} catch (REngineException e) {
-			throw new EvaluationException("Requested operation cannot be executed in R");
+			throw new EvaluationException("Requested operation cannot be executed in R. ");
 		} catch (REXPMismatchException e) {
 			throw new EvaluationException("Operation requested is not supported by the given R object type");
 		}
+	}
+
+	private REXP executeScriptInR(ArrayList<String> script, boolean requireOutput)
+			throws REXPMismatchException, REngineException {
+		REXP out = null;
+		for (String line : script) {
+			LOGGER.info(line);
+			out = rEngine.parseAndEval(line, rEnvironment, true);
+		}
+
+		return out;
 	}
 
     private StringBuilder generateFormula(MLRWorkflow mlRWorkflow) throws EvaluationException {
@@ -137,7 +164,7 @@ public class RExtension {
 
         try {
 
-            rEngine.parseAndEval(CommonConstants.DATA + " <- read.csv('" + mlRWorkflow.getDatasetURL() + "')", rEnvironment, false);
+            rEngine.parseAndEval(CommonConstants.DATASET + " <- read.csv('" + mlRWorkflow.getDatasetURL() + "')", rEnvironment, false);
             LOGGER.trace("input <- read.csv('"+ mlRWorkflow.getDatasetURL()+"')");
 
             List<MLFeature> features = mlRWorkflow.getFeatures();
@@ -208,8 +235,8 @@ public class RExtension {
 	                                                               REXPMismatchException {
 		String name = feature.getName();
 		LOGGER.debug("#Define as categorical : " + name);
-		rEngine.parseAndEval(CommonConstants.DATA + "$" + name + "<- factor(input$" + name + ")", rEnvironment, false);
-		LOGGER.trace(CommonConstants.DATA + "$" + name + "<- factor(input$" + name + ")");
+		rEngine.parseAndEval(CommonConstants.DATASET + "$" + name + "<- factor(input$" + name + ")", rEnvironment, false);
+		LOGGER.trace(CommonConstants.DATASET + "$" + name + "<- factor(input$" + name + ")");
 
 	}
 
