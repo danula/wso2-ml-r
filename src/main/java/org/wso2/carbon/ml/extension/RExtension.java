@@ -174,6 +174,7 @@ public class RExtension {
 
 			if (exportPath == null) {
 				log.warn("Export path is null. Skipping exporting process");
+				return;
 			}
 
 			log.info("Generating exporting script");
