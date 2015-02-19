@@ -14,9 +14,9 @@ public class SupportVectorMachine extends RAlgorithm {
 		ArrayList<String> modelScript = new ArrayList<>();
 		modelScript.add(LIB_E1071);
 		modelScript.add(CommonConstants.LIBRARY_PMML);
+		modelScript.add(CommonConstants.TUNED_MODEL + "<- svm(" + parameters.toString() + ")");
 		modelScript
-				.add(CommonConstants.TUNED_MODEL + "<- svm(" + parameters.toString() + ")");
-		modelScript.add(CommonConstants.PMML_MODEL + " <- pmml(" + CommonConstants.TUNED_MODEL + ")");
+				.add(CommonConstants.PMML_MODEL + " <- pmml(" + CommonConstants.TUNED_MODEL + ")");
 
 		return modelScript;
 	}

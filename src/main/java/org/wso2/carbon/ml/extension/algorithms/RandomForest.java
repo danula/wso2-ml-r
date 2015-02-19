@@ -5,7 +5,7 @@ import org.wso2.carbon.ml.extension.utils.CommonConstants;
 
 import java.util.ArrayList;
 
-public class RandomForest extends RAlgorithm{
+public class RandomForest extends RAlgorithm {
 
 	public static final String LIB_RF = "library('randomForest')";
 
@@ -15,9 +15,10 @@ public class RandomForest extends RAlgorithm{
 		ArrayList<String> modelScript = new ArrayList<>();
 		modelScript.add(LIB_RF);
 		modelScript.add(CommonConstants.LIBRARY_PMML);
+		modelScript.add(CommonConstants.TUNED_MODEL + "<- randomForest(" + parameters.toString() +
+		                ")");
 		modelScript
-				.add(CommonConstants.TUNED_MODEL + "<- randomForest(" + parameters.toString() + ")");
-		modelScript.add(CommonConstants.PMML_MODEL + " <- pmml(" + CommonConstants.TUNED_MODEL + ")");
+				.add(CommonConstants.PMML_MODEL + " <- pmml(" + CommonConstants.TUNED_MODEL + ")");
 
 		return modelScript;
 	}

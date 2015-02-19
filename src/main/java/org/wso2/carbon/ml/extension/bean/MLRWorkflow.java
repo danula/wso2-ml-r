@@ -23,20 +23,19 @@ import java.util.Map;
 
 public class MLRWorkflow extends MLWorkflow implements Serializable {
 
-    private Map<String, String> trainControls;
+	private Map<String, String> trainControls;
 
-    /**
-     *
-     * @return Returns train controls
-     */
-    public Map<String, String> getTrainControls() {
-        return trainControls;
-    }
+	/**
+	 * @return Returns train controls
+	 */
+	public Map<String, String> getTrainControls() {
+		return trainControls;
+	}
 
-    /**
-     * @param trainControls Sets training controls
-     */
-    public void setTrainControls(Map<String, String> trainControls) {
-        this.trainControls = trainControls;
-    }
+	/**
+	 * @param trainControls Sets training controls
+	 */
+	public void setTrainControls(Map<String, String> trainControls) {
+		this.trainControls = trainControls;
+	}
 }

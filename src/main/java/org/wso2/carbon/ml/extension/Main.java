@@ -7,25 +7,24 @@ import org.wso2.carbon.ml.extension.exception.InitializationException;
 
 public class Main {
 
-    private static final Logger LOGGER = Logger.getLogger(Main.class);
+	private static final Logger LOGGER = Logger.getLogger(Main.class);
 
-    public static void main(String[] args) {
-        long st = System.currentTimeMillis();
-        RExtension rex = null;
-        try {
-            rex = new RExtension();
-            rex.generateModel("src/test/resources/workflow-1.json");
-        } catch (FormattingException e) {
-            e.printStackTrace();
-        } catch (EvaluationException e) {
-            e.printStackTrace();
-        } catch (InitializationException e) {
-            e.printStackTrace();
-        }
-        
-        LOGGER.info(System.currentTimeMillis() - st);
+	public static void main(String[] args) {
+		long st = System.currentTimeMillis();
+		RExtension rex = null;
+		try {
+			rex = new RExtension();
+			rex.generateModel("src/test/resources/workflow-1.json");
+		} catch (FormattingException e) {
+			e.printStackTrace();
+		} catch (EvaluationException e) {
+			e.printStackTrace();
+		} catch (InitializationException e) {
+			e.printStackTrace();
+		}
 
+		LOGGER.info(System.currentTimeMillis() - st);
 
-    }
+	}
 
 }

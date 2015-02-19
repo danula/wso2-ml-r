@@ -8,20 +8,23 @@ import java.util.Map;
 
 public class KMeans extends RAlgorithm {
 
-	@Override public ArrayList<String> generateScript(MLRWorkflow mlRWorkflow, StringBuilder formula){
+	@Override public ArrayList<String> generateScript(MLRWorkflow mlRWorkflow,
+	                                                  StringBuilder formula) {
 		ArrayList<String> script = new ArrayList<>();
 		StringBuilder clusterScript = new StringBuilder();
 		clusterScript.append(CommonConstants.MODEL).append(" <- ");
-		clusterScript.append(CommonConstants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName())).append("(").append(formula.toString());
+		clusterScript.append(CommonConstants.ALGORITHM_MAP.get(mlRWorkflow.getAlgorithmName()))
+		             .append("(").append(formula.toString());
 
 		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
-		for(Map.Entry<String, String> entry : hyperParameters.entrySet()){
+		for (Map.Entry<String, String> entry : hyperParameters.entrySet()) {
 			clusterScript.append(",").append(entry.getKey()).append("=").append(entry.getValue());
 		}
 
 		script.add(clusterScript.toString());
 		return script;
 	}
+
 	@Override public ArrayList<String> generatePMML(StringBuilder parameters,
 	                                                MLRWorkflow mlrWorkflow) {
 		ArrayList<String> modelScript = new ArrayList<>();

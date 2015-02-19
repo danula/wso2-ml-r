@@ -131,13 +131,13 @@ public class RExtension {
 		StringBuilder formula = generateFormula(mlRWorkflow);
 		AlgorithmFactory algorithmFactory = AlgorithmFactory.getAlgorithmFactory();
 
-		if(algorithmFactory == null){
+		if (algorithmFactory == null) {
 			throw new EvaluationException("Unexpected error creating AlgorithmFactory.");
 		}
 
 		RAlgorithm algorithm = algorithmFactory.getAlgorithmObject(mlRWorkflow.getAlgorithmName());
 
-		if(algorithm == null) {
+		if (algorithm == null) {
 			throw new EvaluationException("Unexpected error instantiating the algorithm class.");
 		}
 
@@ -203,7 +203,7 @@ public class RExtension {
 	/**
 	 * Execute a given list of scripts in R.
 	 *
-	 * @param script list of R script
+	 * @param script        list of R script
 	 * @param requireOutput whether an output is required
 	 * @return output {@link org.rosuda.REngine.REXP}
 	 * @throws REXPMismatchException
@@ -223,7 +223,7 @@ public class RExtension {
 	/**
 	 * Execute a given script line in R.
 	 *
-	 * @param script single line of script
+	 * @param script        single line of script
 	 * @param requireOutput whether an output is required
 	 * @return output {@link org.rosuda.REngine.REXP}
 	 * @throws REXPMismatchException
