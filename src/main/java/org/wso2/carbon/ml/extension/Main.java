@@ -22,7 +22,7 @@ public class Main {
         } catch (InitializationException e) {
             e.printStackTrace();
         } finally{
-            rex.destroy();
+            rex.destroyREngine();
         }
         
         LOGGER.info(System.currentTimeMillis() - st);

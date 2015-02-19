@@ -64,7 +64,4 @@ public class CommonConstants {
     public static final String LIBRARY_CARET = "library('caret')";
     public static final String LIBRARY_PMML = "library('pmml')";
 
-	/*Classes*/
-
-	public static final String NAIVE_BAYES = "org.wso2.carbon.ml.extension.algorithms.NaiveBayes";
 }
