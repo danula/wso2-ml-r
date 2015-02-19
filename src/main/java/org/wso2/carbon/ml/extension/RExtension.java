@@ -55,32 +55,34 @@ public class RExtension {
 	}
 
 	/**
-	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}. Exports PMML file to the default location.
+	 * Generates the model for {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}.
+	 * Exports PMML file to the default location.
 	 *
 	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow} bean
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLRWorkflow mlRWorkflow) throws EvaluationException {
-		runScript(mlRWorkflow, CommonConstants.DEFAULT_EXPORT_PATH.toString());
+	public void generateModel(MLRWorkflow mlRWorkflow) throws EvaluationException {
+		generateModel(mlRWorkflow, CommonConstants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
-	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}. Parses JSON mapped workflow form the given
-	 * URL. Exports PMML file to the default location.
+	 * Generates the model for {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}.
+	 * Parses JSON mapped workflow form the given URL.
+	 * Exports PMML file to the default location.
 	 *
 	 * @param workflowURL absolute location of the JSON mapped workflow
 	 * @throws org.wso2.carbon.ml.extension.exception.FormattingException
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL)
+	public void generateModel(String workflowURL)
 			throws FormattingException, InitializationException, EvaluationException {
-		evaluate(workflowURL, CommonConstants.DEFAULT_EXPORT_PATH.toString());
+		generateModel(workflowURL, CommonConstants.DEFAULT_EXPORT_PATH.toString());
 	}
 
 	/**
-	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}. Parses JSON mapped workflow form the given
-	 * URL.
+	 * Generates the model for {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}.
+	 * Parses JSON mapped workflow form the given URL.
 	 *
 	 * @param workflowURL absolute location of the JSON mapped workflow
 	 * @param exportPath  absolute path to the exported PMML file
@@ -88,33 +90,44 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(String workflowURL, String exportPath)
+	public void generateModel(String workflowURL, String exportPath)
 			throws FormattingException, InitializationException, EvaluationException {
+
+		if (workflowURL == null) {
+			log.error("Cannot parse workflow. Workflow URL is null");
+			throw new InitializationException("Workflow URL is null");
+		}
 		WorkflowParser parser = new WorkflowParser();
 		MLRWorkflow MLRWorkflow = parser.parseWorkflow(workflowURL);
-		runScript(MLRWorkflow, exportPath);
+		generateModel(MLRWorkflow, exportPath);
 	}
 
 	/**
-	 * Evaluates {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
+	 * Generates the model for {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
 	 *
 	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow} bean
 	 * @param exportPath  absolute path to export PMML
 	 * @throws org.wso2.carbon.ml.extension.exception.EvaluationException
 	 */
-	public void evaluate(MLRWorkflow mlRWorkflow, String exportPath) throws EvaluationException {
+	public void generateModel(MLRWorkflow mlRWorkflow, String exportPath)
+			throws EvaluationException {
 		runScript(mlRWorkflow, exportPath);
 	}
 
 	/**
-	 * ]
-	 * Manages script generation process.
+	 * Runs the script in R and export the model as a PMML file.
 	 *
 	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
 	 * @param exportPath  absolute path to export PMML
 	 * @throws EvaluationException
 	 */
 	private void runScript(MLRWorkflow mlRWorkflow, String exportPath) throws EvaluationException {
+
+		if (mlRWorkflow == null) {
+			log.error("Workflow is null. Script cannot be generated. ");
+			throw new EvaluationException("Workflow is null");
+		}
+
 		StringBuilder formula = generateFormula(mlRWorkflow);
 		RAlgorithm algorithm = AlgorithmFactory.getAlgorithm(mlRWorkflow.getAlgorithmName());
 		ArrayList<String> trainScript = algorithm.generateScript(mlRWorkflow, formula);
@@ -148,11 +161,15 @@ public class RExtension {
 				          .append(getDataElement(values.at(i)));
 			}
 
+			if (exportPath == null) {
+				log.warn("Export path is null. Skipping exporting process");
+			}
+
 			log.info("Generating exporting script");
 			exportScript = algorithm.generatePMML(parameters, mlRWorkflow);
 
 			if (exportScript == null || exportScript.size() == 0) {
-				log.info("Export method not specified. Skipping export.");
+				log.warn("Export method not specified. Skipping exporting process.");
 				return;
 			}
 			exportScript.add("write(toString(" + CommonConstants.PMML_MODEL + "),file = '" +
@@ -182,6 +199,13 @@ public class RExtension {
 		return out;
 	}
 
+	/**
+	 * Generates model formula.
+	 *
+	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
+	 * @return formula of the model
+	 * @throws EvaluationException
+	 */
 	private StringBuilder generateFormula(MLRWorkflow mlRWorkflow) throws EvaluationException {
 		log.info("Generating model formula");
 		StringBuilder formula = new StringBuilder();
@@ -244,6 +268,13 @@ public class RExtension {
 		return formula;
 	}
 
+	/**
+	 * Perform imputation for missing data.
+	 *
+	 * @param feature {@link org.wso2.carbon.ml.extension.bean.MLFeature}
+	 * @throws REngineException
+	 * @throws REXPMismatchException
+	 */
 	private void impute(MLFeature feature) throws REngineException, REXPMismatchException {
 		String name = feature.getName();
 		if (feature.getImputeOption().equals(CommonConstants.MEAN_REPLACE)) {
@@ -263,6 +294,13 @@ public class RExtension {
 		}
 	}
 
+	/**
+	 * Defines categorical data as a factor in R
+	 *
+	 * @param feature {@link org.wso2.carbon.ml.extension.bean.MLFeature}
+	 * @throws REngineException
+	 * @throws REXPMismatchException
+	 */
 	private void defineCategoricalData(MLFeature feature)
 			throws REngineException, REXPMismatchException {
 		String name = feature.getName();
@@ -279,7 +317,7 @@ public class RExtension {
 	 * @param rexp {@link org.rosuda.REngine.REXP}
 	 * @return data element
 	 */
-	public String getDataElement(REXP rexp) {
+	private String getDataElement(REXP rexp) {
 		if (rexp instanceof REXPInteger) {
 			return Integer.toString(((REXPInteger) rexp).asIntegers()[0]);
 		} else if (rexp instanceof REXPDouble) {

@@ -13,7 +13,7 @@ import java.util.*;
 
 public class WorkflowParser {
 
-    private final static Logger LOGGER = Logger.getLogger(WorkflowParser.class);
+    private final static Logger log = Logger.getLogger(WorkflowParser.class);
 
     /**
      * Parses Workflow JSON file
@@ -25,7 +25,8 @@ public class WorkflowParser {
      */
     public MLRWorkflow parseWorkflow(String fileURL) throws InitializationException, FormattingException {
 
-        LOGGER.debug("Parsing Workflow");
+        log.info("Parsing Workflow");
+	    log.debug("Workflow Location: " + fileURL);
         JsonParser parser = new JsonParser();
         JsonElement jsonElement = null;
         FileReader fr = null;
@@ -34,13 +35,13 @@ public class WorkflowParser {
             fr = new FileReader(fileURL);
             jsonElement = parser.parse(fr);
         } catch (FileNotFoundException e) {
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             throw new InitializationException("Workflow JSON file does not exist", e);
         } catch (JsonSyntaxException e) {
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             throw new InitializationException("Workflow syntax error", e);
         } catch (JsonParseException e){
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             throw new InitializationException("Workflow cannot be parsed", e);
         }
 
@@ -48,7 +49,7 @@ public class WorkflowParser {
             return populateWorkflowBean(jsonElement);
         }
 
-        LOGGER.error("Parse Error : jsonElement is null");
+        log.error("Parse Error : jsonElement is null");
         return null;
     }
 
@@ -98,7 +99,7 @@ public class WorkflowParser {
      */
     private List<MLFeature> populateFeatures(JsonArray features) {
 
-        LOGGER.debug("Parsing Features");
+        log.debug("Parsing Features");
         List<MLFeature> featuresList = new ArrayList<MLFeature>();
         @SuppressWarnings("unchecked")
         Iterator<JsonElement> iterator = features.iterator();
