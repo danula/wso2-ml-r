@@ -40,6 +40,12 @@ public class RExtension {
 		}
 	}
 
+	/**
+	 * Creates an instance of {@link org.wso2.carbon.ml.extension.RExtension}
+	 *
+	 * @return the RExtension instance
+	 * @throws InitializationException
+	 */
 	public static RExtension getInstance() throws InitializationException {
 		if(rExtension == null) {
 			rExtension = new RExtension();
@@ -192,8 +198,8 @@ public class RExtension {
 			}
 
 			if (exportPath == null) {
-				log.warn("Export path is null. Skipping exporting process");
-				return;
+				log.warn("Export path is null. Using default path. ");
+				exportPath = CommonConstants.DEFAULT_EXPORT_PATH.toString();
 			}
 
 			log.info("Generating exporting script");
