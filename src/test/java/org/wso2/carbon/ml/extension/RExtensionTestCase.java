@@ -32,7 +32,7 @@ public class RExtensionTestCase {
 	public void setup(){
 		try {
             WorkflowParser parser = new WorkflowParser();
-	        this.rex = new RExtension();
+	        this.rex = RExtension.getInstance();
             this.mlRWorkflow = parser.parseWorkflow(RESOURCE_LOCATION + "workflow-1.json");
         } catch (InitializationException e) {
             fail("Unexpected Exception: Cannot create R engine");

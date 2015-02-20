@@ -22,6 +22,7 @@ public class RExtension {
 
 	private final static Logger log = Logger.getLogger(RExtension.class);
 	private static REngine rEngine = null;
+	private static RExtension rExtension = null;
 	private REXP rEnvironment = null;
 
 	/**
@@ -30,19 +31,37 @@ public class RExtension {
 	 *
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 */
-	public RExtension() throws InitializationException {
+	private RExtension() throws InitializationException {
 		PropertyConfigurator.configure("log4j.properties");
+		boolean success = initEngine();
+
+		if(!success) {
+			throw new InitializationException("Error occurred when initializing R engine. ");
+		}
+	}
+
+	public static RExtension getInstance() throws InitializationException {
+		if(rExtension == null) {
+			rExtension = new RExtension();
+		}
+
+		return rExtension;
+	}
+
+	private boolean initEngine() {
 		try {
 			log.info("Initializing R Engine");
 			rEngine = JRIEngine.createEngine();
 			rEnvironment = rEngine.newEnvironment(null, true);
 		} catch (REngineException e) {
 			log.error(e.getMessage());
-			throw new InitializationException("Cannot create R Engine", e);
+			return false;
 		} catch (REXPMismatchException e) {
 			log.error(e.getMessage());
-			throw new InitializationException("Cannot create R Environment", e);
+			return false;
 		}
+
+		return true;
 	}
 
 	/**

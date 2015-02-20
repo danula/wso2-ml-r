@@ -13,7 +13,7 @@ public class Main {
 		long st = System.currentTimeMillis();
 		RExtension rex = null;
 		try {
-			rex = new RExtension();
+			rex = RExtension.getInstance();
 			rex.generateModel("src/test/resources/workflow-1.json");
 		} catch (FormattingException e) {
 			e.printStackTrace();
