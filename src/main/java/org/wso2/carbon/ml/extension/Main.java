@@ -15,6 +15,7 @@ public class Main {
 		try {
 			rex = RExtension.getInstance();
 			rex.generateModel("src/test/resources/workflow-1.json");
+			rex.destroyREngine();
 		} catch (FormattingException e) {
 			e.printStackTrace();
 		} catch (EvaluationException e) {

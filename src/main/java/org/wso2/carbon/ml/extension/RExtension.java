@@ -214,8 +214,6 @@ public class RExtension {
 		} catch (REXPMismatchException e) {
 			throw new EvaluationException(
 					"Operation requested is not supported by the given R object type");
-		} finally {
-			destroyREngine();
 		}
 	}
 
