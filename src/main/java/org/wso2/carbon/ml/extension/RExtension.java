@@ -1,7 +1,6 @@
 package org.wso2.carbon.ml.extension;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.rosuda.REngine.*;
 import org.wso2.carbon.ml.extension.algorithms.AlgorithmFactory;
@@ -32,7 +31,6 @@ public class RExtension {
 	 * @throws org.wso2.carbon.ml.extension.exception.InitializationException
 	 */
 	private RExtension() throws InitializationException {
-		PropertyConfigurator.configure("log4j.properties");
 		boolean success = initEngine();
 
 		if(!success) {
