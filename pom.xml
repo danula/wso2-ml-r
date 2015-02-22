@@ -3,7 +3,7 @@
 	<groupId>org.wso2.carbon.ml</groupId>
 	<artifactId>ml-r-extension</artifactId>
     <packaging>jar</packaging>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<name>RExtension</name>
     <scm>
         <connection>scm:git:git://github.com/danula/wso2-ml-r.git</connection>
