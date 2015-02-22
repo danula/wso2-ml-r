@@ -3,9 +3,7 @@ package org.wso2.carbon.ml.extension.algorithms;
 import org.apache.log4j.Logger;
 import org.wso2.carbon.ml.extension.exception.InitializationException;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,12 +77,9 @@ public class AlgorithmFactory {
 
 	private boolean readProperties() {
 		Properties algorithmProperties = new Properties();
-		InputStream inStream;
-
 		try {
-			inStream = new FileInputStream("algorithms.properties");
 
-			algorithmProperties.load(inStream);
+			algorithmProperties.load(this.getClass().getClassLoader().getResourceAsStream("algorithms.properties"));
 
 			Enumeration<?> e = algorithmProperties.propertyNames();
 
