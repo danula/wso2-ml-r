@@ -1,6 +1,5 @@
 package org.wso2.carbon.ml.extension;
 
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,8 +18,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class RExtensionTestCase {
-	
-	private static final Logger LOGGER = Logger.getLogger(RExtensionTestCase.class);
 	
 	private static final String RESOURCE_LOCATION = "src/test/resources/";
 	
