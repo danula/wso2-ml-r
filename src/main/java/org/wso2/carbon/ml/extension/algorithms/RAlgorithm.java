@@ -8,6 +8,14 @@ import java.util.Map;
 
 public abstract class RAlgorithm {
 
+	/**
+	 * Generates script to train the model. Default implementation generates the script to train
+	 * the model using <a href="http://caret.r-forge.r-project.org/">caret library</a>.
+	 *
+	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
+	 * @param formula     model formula generated
+	 * @return list of R script lines.
+	 */
 	public ArrayList<String> generateScript(MLRWorkflow mlRWorkflow, StringBuilder formula) {
 		ArrayList<String> script = new ArrayList<>();
 		StringBuilder trainScript = new StringBuilder();
@@ -35,6 +43,12 @@ public abstract class RAlgorithm {
 		return script;
 	}
 
+	/**
+	 * Appends the train controls to the script.
+	 *
+	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
+	 * @return train controls
+	 */
 	protected StringBuilder appendControlParameters(MLRWorkflow mlRWorkflow) {
 		Map<String, String> trainControls = mlRWorkflow.getTrainControls();
 		StringBuilder trainControl =
@@ -59,6 +73,12 @@ public abstract class RAlgorithm {
 		return trainControl;
 	}
 
+	/**
+	 * Appends the hyper parameters to the script.
+	 *
+	 * @param mlRWorkflow {@link org.wso2.carbon.ml.extension.bean.MLRWorkflow}
+	 * @return hyper parameters
+	 */
 	protected StringBuilder appendHyperParameters(MLRWorkflow mlRWorkflow) {
 
 		Map<String, String> hyperParameters = mlRWorkflow.getHyperParameters();
